@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Magic Chess - So Gaming Shop</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f4f0fa; color: #333; }
+        .header { background: linear-gradient(135deg, #4b0082, #6a11cb); padding: 20px; color: white; display: flex; align-items: center; gap: 15px; }
+        .back-btn { text-decoration: none; color: white; font-size: 24px; }
+        .container { padding: 20px; }
+
+        .input-group { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        .id-inputs { display: flex; gap: 10px; }
+        .id-inputs input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .item-card { background: white; padding: 15px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s; }
+        .item-card.selected { border-color: #6a11cb; background: #f3f0ff; }
+        .item-name { display: block; font-weight: bold; color: #333; font-size: 14px; margin-bottom: 5px; }
+        .price { font-size: 13px; color: #6a11cb; font-weight: bold; }
+
+        .buy-btn { width: 100%; background: #00A651; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,166,81,0.3); }
+        .buy-btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div style="font-weight: bold;">Magic Chess Topup</div>
+</div>
+
+<div class="container">
+    <div class="input-group">
+        <label>MLBB Player ID & Server ID</label>
+        <div class="id-inputs">
+            <input type="number" id="player-id" placeholder="ID">
+            <input type="number" id="server-id" placeholder="(Server)">
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 10px;">* Magic Chess အတွက် MLBB ID ကိုသာ သုံးပေးပါ။</p>
+    </div>
+
+    <label style="font-weight: bold; margin-bottom: 10px; display: block;">ပစ္စည်းရွေးချယ်ပါ</label>
+    <div class="items-grid">
+        <div class="item-card" onclick="selectItem(this, 'Magic Chess Pass', 12500)">
+            <span class="item-name">♟️ Magic Chess Pass</span>
+            <span class="price">12,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '257 Diamonds', 6500)">
+            <span class="item-name">💎 257 Diamonds</span>
+            <span class="price">6,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '706 Diamonds', 17500)">
+            <span class="item-name">💎 706 Diamonds</span>
+            <span class="price">17,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, 'Weekly Pass', 4500)">
+            <span class="item-name">🌟 Weekly Pass</span>
+            <span class="price">4,500 Ks</span>
+        </div>
+    </div>
+
+    <button class="buy-btn" id="buyBtn" onclick="confirmPurchase()">ဝယ်ယူမည်</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+// ... အပေါ်က import စာကြောင်းတွေ ...
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+  authDomain: "johnny-gaming-shop.firebaseapp.com",
+  projectId: "johnny-gaming-shop",
+  storageBucket: "johnny-gaming-shop.firebasestorage.app",
+  messagingSenderId: "833081291484",
+  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
+  measurementId: "G-ECKGE175LZ"
+};
+
+// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let selectedItemName = "";
+    let selectedItemPrice = 0;
+
+    window.selectItem = (el, name, price) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItemName = name;
+        selectedItemPrice = price;
+    };
+
+    // Admin ဆီ Telegram Message ပို့ခြင်း
+    async function sendToAdmin(details) {
+        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const chat_id = "6427719618";
+        
+        const message = `
+♟️ **SO GAMING SHOP - MAGIC CHESS**
+━━━━━━━━━━━━━━━━━━
+📊 **ဝန်ဆောင်မှု:** Magic Chess
+🆔 **ID/Server:** ${details.playerID}
+🎁 **ပစ္စည်း:** ${details.itemName}
+💰 **ကျသင့်ငွေ:** ${details.price} Ks
+📧 **ဝယ်သူ:** ${details.userEmail}
+━━━━━━━━━━━━━━━━━━
+သားကြီး... Chess Pass ဒါမှမဟုတ် Dia အမြန်ဖြည့်ပေးလိုက်! 🚀`;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+        try { await fetch(url); } catch (e) { console.error(e); }
+    }
+
+    window.confirmPurchase = async () => {
+        const user = auth.currentUser;
+        if(!user) return alert("Login အရင်ဝင်ပါ");
+
+        const pid = document.getElementById('player-id').value;
+        const sid = document.getElementById('server-id').value;
+        
+        if(!pid || !sid) return alert("ID နဲ့ Server အပြည့်အစုံဖြည့်ပါ");
+        if(selectedItemPrice === 0) return alert("ဝယ်ယူမယ့် ပစ္စည်းအရင်ရွေးပါ");
+
+        const btn = document.getElementById('buyBtn');
+        btn.disabled = true;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if((userSnap.data().balance || 0) < selectedItemPrice) {
+            alert("လက်ကျန်ငွေ မလောက်ပါဘူး သားကြီး");
+            btn.disabled = false;
+            return;
+        }
+
+        // 1. Firebase စာရင်းသွင်း
+        await updateDoc(userRef, {
+            balance: increment(-selectedItemPrice),
+            total_spent: increment(selectedItemPrice),
+            spinCount: increment(1)
+        });
+
+        await addDoc(collection(db, "users", user.uid, "purchases"), {
+            gameName: "Magic Chess",
+            playerID: `${pid} (${sid})`,
+            itemName: selectedItemName,
+            price: selectedItemPrice,
+            status: "pending",
+            time: serverTimestamp()
+        });
+
+        // 2. Telegram Notification ပို့
+        await sendToAdmin({
+            playerID: `${pid} (${sid})`,
+            itemName: selectedItemName,
+            price: selectedItemPrice,
+            userEmail: user.email
+        });
+
+        alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin ဆီ အမှာစာရောက်သွားပါပြီ။");
+        window.location.href = "history.html";
+    };
+</script>
+</body>
+</html>

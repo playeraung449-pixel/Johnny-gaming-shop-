@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Buyers - Johnny Gaming Shop</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh; color: #333;
+        }
+        .header {
+            background: white; padding: 20px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
+        .header-title { font-size: 18px; font-weight: bold; color: #333; }
+
+        .container { padding: 15px; }
+        
+        /* Leaderboard Style */
+        .buyer-list {
+            background: white; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .buyer-item {
+            display: flex; align-items: center; padding: 15px;
+            border-bottom: 1px solid #eee; transition: 0.2s;
+        }
+        .buyer-item:last-child { border-bottom: none; }
+        
+        /* Rank Circle */
+        .rank {
+            width: 35px; height: 35px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; margin-right: 15px; font-size: 14px;
+        }
+        .rank-1 { background: gold; color: #333; transform: scale(1.1); }
+        .rank-2 { background: silver; color: #333; }
+        .rank-3 { background: #cd7f32; color: white; } /* Bronze */
+        .rank-other { background: #f0f0f0; color: #777; }
+
+        .buyer-info { flex-grow: 1; }
+        .buyer-name { font-weight: bold; font-size: 15px; display: block; }
+        .buyer-total { font-size: 12px; color: #00A651; font-weight: 600; }
+
+        .trophy { font-size: 20px; margin-left: 10px; }
+
+        .loading-text { text-align: center; color: white; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div class="header-title">TOP BUYERS (ထိပ်တန်းအားပေးသူများ)</div>
+</div>
+
+<div class="container">
+    <div class="buyer-list" id="top-list">
+        <div class="loading-text">ခေတ္တစောင့်ဆိုင်းပါ...</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const topList = document.getElementById('top-list');
+
+    // total_spent အများဆုံးသူ ၁၀ ယောက်ကို ဆွဲထုတ်မယ်
+    const q = query(collection(db, "users"), orderBy("total_spent", "desc"), limit(10));
+
+    onSnapshot(q, (snapshot) => {
+        topList.innerHTML = "";
+        let index = 1;
+
+        if (snapshot.empty) {
+            topList.innerHTML = "<div style='padding:20px; text-align:center;'>မှတ်တမ်းမရှိသေးပါ</div>";
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const name = data.username || "အမည်မသိအားပေးသူ";
+            const total = data.total_spent || 0;
+
+            // Ranking အလိုက် ပုံစံပြောင်းမယ်
+            let rankClass = "rank-other";
+            let trophy = "";
+            if (index === 1) { rankClass = "rank-1"; trophy = "👑"; }
+            else if (index === 2) rankClass = "rank-2";
+            else if (index === 3) rankClass = "rank-3";
+
+            topList.innerHTML += `
+                <div class="buyer-item">
+                    <div class="rank ${rankClass}">${index}</div>
+                    <div class="buyer-info">
+                        <span class="buyer-name">${name} ${trophy}</span>
+                        <span class="buyer-total">စုစုပေါင်းဝယ်ယူမှု: ${total.toLocaleString()} Ks</span>
+                    </div>
+                </div>
+            `;
+            index++;
+        });
+    });
+</script>
+
+</body>
+</html>

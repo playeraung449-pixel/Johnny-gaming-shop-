@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy HOK Tokens - So Gaming Shop</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #fdfdfd; color: #333; }
+        .header { background: linear-gradient(90deg, #fdbb2d, #22c1c3); padding: 20px; color: white; display: flex; align-items: center; gap: 15px; }
+        .back-btn { text-decoration: none; color: white; font-size: 24px; font-weight: bold; }
+        .container { padding: 20px; }
+        .hok-banner { background: #1c1c1c; border-radius: 15px; padding: 15px; color: #fdbb2d; text-align: center; margin-bottom: 20px; font-weight: bold; border: 1px solid #fdbb2d; }
+        
+        .input-group { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        
+        .tokens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .token-card { background: white; padding: 15px; border-radius: 12px; border: 2px solid #eee; cursor: pointer; text-align: center; transition: 0.2s; }
+        .token-card.selected { border-color: #fdbb2d; background: #fffdf0; transform: translateY(-3px); }
+        .token-amount { display: block; font-weight: bold; color: #333; font-size: 15px; margin-bottom: 5px; }
+        .price { font-size: 13px; color: #e67e22; font-weight: bold; }
+
+        .buy-btn { width: 100%; background: #00A651; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,166,81,0.3); }
+        .buy-btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div style="font-weight: bold;">Honor of Kings Tokens</div>
+</div>
+
+<div class="container">
+    <div class="hok-banner">
+        🔥 HOK Official Tokens Recharge 🔥
+    </div>
+
+    <div class="input-group">
+        <label>Player ID (UID)</label>
+        <input type="number" id="player-id" placeholder="HOK Player ID ကို ရိုက်ထည့်ပါ">
+    </div>
+
+    <label style="font-weight: bold; margin-bottom: 10px; display: block;">Tokens ပမာဏ ရွေးချယ်ပါ</label>
+    <div class="tokens-grid">
+        <div class="token-card" onclick="selectToken(this, '80+8 Tokens', 2800)">
+            <span class="token-amount">🪙 88 Tokens</span>
+            <span class="price">2,800 K</span>
+        </div>
+        <div class="token-card" onclick="selectToken(this, '240+24 Tokens', 8200)">
+            <span class="token-amount">🪙 264 Tokens</span>
+            <span class="price">8,200 K</span>
+        </div>
+        <div class="token-card" onclick="selectToken(this, '400+40 Tokens', 13500)">
+            <span class="token-amount">🪙 440 Tokens</span>
+            <span class="price">13,500 K</span>
+        </div>
+        <div class="token-card" onclick="selectToken(this, '800+80 Tokens', 26500)">
+            <span class="token-amount">🪙 880 Tokens</span>
+            <span class="price">26,500 K</span>
+        </div>
+    </div>
+
+    <button class="buy-btn" id="buyBtn" onclick="processHokPurchase()">ဝယ်ယူမည်</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+    // ... အပေါ်က import စာကြောင်းတွေ ...
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+  authDomain: "johnny-gaming-shop.firebaseapp.com",
+  projectId: "johnny-gaming-shop",
+  storageBucket: "johnny-gaming-shop.firebasestorage.app",
+  messagingSenderId: "833081291484",
+  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
+  measurementId: "G-ECKGE175LZ"
+};
+
+// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let selectedItemName = "";
+    let selectedPrice = 0;
+
+    window.selectToken = (el, name, price) => {
+        document.querySelectorAll('.token-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItemName = name;
+        selectedPrice = price;
+    };
+
+    async function sendToAdmin(details) {
+        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const chat_id = "6427719618";
+        const message = `
+👑 **SO GAMING SHOP - HOK ORDER**
+━━━━━━━━━━━━━━━━━━
+🎮 **ဂိမ်း:** Honor of Kings
+🆔 **Player ID:** ${details.playerID}
+🪙 **Tokens:** ${details.itemName}
+💰 **ကျသင့်ငွေ:** ${details.price} Ks
+📧 **ဝယ်သူ:** ${details.userEmail}
+━━━━━━━━━━━━━━━━━━
+သားကြီး... HOK Tokens အမြန်ဖြည့်ပေးလိုက်တော့! 🚀`;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+        try { await fetch(url); } catch (e) { console.error(e); }
+    }
+
+    window.processHokPurchase = async () => {
+        const user = auth.currentUser;
+        if(!user) return alert("Login အရင်ဝင်ပါ");
+        
+        const pid = document.getElementById('player-id').value;
+        if(!pid) return alert("Player ID ရိုက်ပါ");
+        if(selectedPrice === 0) return alert("ဝယ်ယူမယ့် ပမာဏ ရွေးပါ");
+
+        const btn = document.getElementById('buyBtn');
+        btn.disabled = true;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if((userSnap.data().balance || 0) < selectedPrice) {
+            alert("လက်ကျန်ငွေ မလောက်ပါဘူး");
+            btn.disabled = false;
+            return;
+        }
+
+        await updateDoc(userRef, {
+            balance: increment(-selectedPrice),
+            total_spent: increment(selectedPrice),
+            spinCount: increment(1)
+        });
+
+        await addDoc(collection(db, "users", user.uid, "purchases"), {
+            gameName: "Honor of Kings",
+            playerID: pid,
+            itemName: selectedItemName,
+            price: selectedPrice,
+            status: "pending",
+            time: serverTimestamp()
+        });
+
+        await sendToAdmin({
+            playerID: pid,
+            itemName: selectedItemName,
+            price: selectedPrice,
+            userEmail: user.email
+        });
+
+        alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin ဆီ အမှာစာရောက်သွားပါပြီ။");
+        window.location.href = "history.html";
+    };
+</script>
+</body>
+</html>

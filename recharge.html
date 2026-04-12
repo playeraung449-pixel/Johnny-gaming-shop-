@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ငွေဖြည့်မည် - Johnny Gaming Shop</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Pyidaungsu', 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        .logo-text { font-weight: bold; color: #0072BC; margin-left: 10px; font-size: 16px; }
+
+        /* Banner Box */
+        .banner-box {
+            margin: 10px 15px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .banner-box img { width: 100%; display: block; }
+
+        /* Table Area */
+        .notice-container {
+            margin: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #1B75BB;
+        }
+
+        .notice-header {
+            background: #1B75BB;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .text-left { text-align: left; line-height: 1.5; }
+        .status-red { color: red; font-weight: bold; }
+        .status-green { color: green; font-weight: bold; }
+        .status-blue { color: #1B75BB; font-weight: bold; }
+
+        /* Understand Button */
+        .btn-container {
+            padding: 15px;
+        }
+
+        .btn-understand {
+            width: 100%;
+            background-color: #28a745; /* အစိမ်းရောင် */
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-understand:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div style="width:25px; height:25px; background:#0072BC; border-radius:50%;"></div>
+            <div class="logo-text">JOHNNY GAMING SHOP</div>
+        </div>
+        <a href="index.html" style="text-decoration:none; background:white; padding:5px 12px; border-radius:8px; color:#0072BC;">🏠</a>
+    </header>
+
+    <div class="banner-box">
+        <img src="https://via.placeholder.com/400x180/00AEEF/FFFFFF?text=JOHNNY+GAMING+SHOP+RECHARGE+INFO" alt="Banner">
+    </div>
+
+    <div class="notice-container">
+        <div class="notice-header">ငွေဖြည့်ရာတွင် အသိပေးချက်များ</div>
+        <table>
+            <tr>
+                <th style="width: 70%;">အကြောင်းရာ</th>
+                <th style="width: 30%;">မှတ်ချက်</th>
+            </tr>
+            <tr>
+                <td class="text-left">ဖုန်းနံပါတ် အပြောင်းလဲရှိနိုင်သဖြင့် App ထဲရှိ ဖုန်းနံပါတ်ကို Copy ယူပြီးမှသာ လွှဲပေးပါ... မှားလွှဲပါက JOHNNY GAMING SHOP မှ လုံးဝတာဝန်ယူဖြေရှင်းပေးမည်မဟုတ်ပါ...</td>
+                <td class="status-blue">အသိပေး<br>🚨ချက်🚨</td>
+            </tr>
+            <tr>
+                <td class="text-left">ငွေဖြည့်ချိန်မှာ မနက် (၈ နာရီခွဲ) မှ ည (၁၀ နာရီ) ထိသာ အမြန်ရမှာဖြစ်ပါတယ်...</td>
+                <td class="status-blue">ငွေဖြည့်ချိန်<br>🕒</td>
+            </tr>
+            <tr>
+                <td class="text-left">ငွေအတုဖြင့်လွှဲသောအကောင့်များBanခံရနိုင်သည်⚠️</td>
+                <td class="status-red">အထူးအသိပေးချက်🔴<br>admin</td>
+            </tr>
+            <tr>
+                <td class="text-left">ငွေလွှဲပြီးပါက adminဘက်မှစစ်ဆေးပါမညါ </td>
+                <td class="status-green">ကြာချိန်🟢<br>5 မိနစ်</td>
+            </tr>
+            <tr>
+                <td class="text-left">ငွေလက်ခံပြီးပါက မိမိစိတ်ကြိုက်ရာကို ဝယ်ယူနိုင်ပါသည် ဝယ်ယူပြီးပါက သင့်ဝယ်လိုက်သော  itemsသည် မိနစ်အနည်းငယ်အတွင်းရောက်ရှိပါမည်</td>
+                <td class="status-green">ခန့်မှန်းခြေ<br>၁၅ မိနစ်🟢</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="btn-container">
+        <button class="btn-understand" onclick="goToWallet()">နားလည်ပါပြီ</button>
+    </div>
+
+    <script>
+        function goToWallet() {
+            // "နားလည်ပါပြီ" နှိပ်ရင် တကယ်ငွေလွှဲရမယ့် ပုံစံတွေရှိတဲ့ Page ကို သွားမယ်
+            window.location.href = "payment_methods.html";
+        }
+    </script>
+
+</body>
+</html>

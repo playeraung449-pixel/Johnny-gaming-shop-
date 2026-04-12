@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Johnny Gaming Shop</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: white; padding: 20px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
+        .header-title { font-size: 18px; font-weight: bold; color: #333; }
+
+        .orders-container { padding: 15px; }
+        
+        .order-card {
+            background: white; padding: 15px; border-radius: 15px;
+            margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 8px;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .order-id { font-size: 12px; color: #888; }
+        
+        .status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .pending { background: #fff3cd; color: #856404; } /* စောင့်ဆိုင်းဆဲ */
+        .completed { background: #d4edda; color: #155724; } /* အောင်မြင်သည် */
+        .rejected { background: #f8d7da; color: #721c24; } /* ငြင်းပယ်ခံရသည် */
+
+        .order-info { font-size: 14px; color: #333; margin-top: 5px; }
+        .order-time { font-size: 11px; color: #999; margin-top: 5px; }
+        .amount-display { font-size: 18px; font-weight: bold; color: #00A651; margin-top: 5px; }
+
+        .no-order { text-align: center; color: white; margin-top: 50px; font-size: 15px; }
+        
+        /* Image Preview Style */
+        .slip-img { 
+            width: 100%; height: 150px; object-fit: cover; 
+            border-radius: 10px; margin-top: 10px; border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div class="header-title">အော်ဒါမှတ်တမ်းများ</div>
+</div>
+
+<div class="orders-container" id="orders-list">
+    <div style="text-align:center; color:white; margin-top:30px;">Loading...</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "login.html";
+        } else {
+            const listDiv = document.getElementById('orders-list');
+            
+            // အော်ဒါတွေကို အချိန်နဲ့တပြေးညီ စောင့်ကြည့်မယ်
+            const ordersRef = collection(db, "users", user.uid, "orders");
+            const q = query(ordersRef, orderBy("timestamp", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                listDiv.innerHTML = "";
+
+                if (snapshot.empty) {
+                    listDiv.innerHTML = "<div class='no-order'>အော်ဒါမှတ်တမ်း မရှိသေးပါ</div>";
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const date = data.timestamp ? data.timestamp.toDate() : new Date();
+                    const timeStr = date.toLocaleString('en-GB', { 
+                        day: 'numeric', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: true 
+                    });
+
+                    // Status အရောင် သတ်မှတ်ခြင်း
+                    let statusClass = "pending";
+                    let statusText = "စောင့်ဆိုင်းဆဲ";
+                    
+                    if (data.status === "completed") {
+                        statusClass = "completed";
+                        statusText = "အောင်မြင်သည်";
+                    } else if (data.status === "rejected") {
+                        statusClass = "rejected";
+                        statusText = "ငြင်းပယ်ခံရသည်";
+                    }
+
+                    listDiv.innerHTML += `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span class="order-id">ID: ${doc.id.substring(0,8)}</span>
+                                <span class="status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="order-info">
+                                <b>အမျိုးအစား:</b> ${data.type || "ငွေဖြည့်ခြင်း"}<br>
+                                ${data.amount ? `<div class="amount-display">+ ${data.amount.toLocaleString()} ကျပ်</div>` : 'ငွေပမာဏ စစ်ဆေးနေဆဲ...'}
+                            </div>
+                            ${data.screenshot ? `<img src="${data.screenshot}" class="slip-img">` : ''}
+                            <div class="order-time">📅 ${timeStr}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

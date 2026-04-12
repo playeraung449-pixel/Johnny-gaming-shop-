@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy PUBG UC - So Gaming Shop</title>
+    <style>
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0a192f; /* PUBG Dark Blue */
+            color: #fff; 
+        }
+        .header { 
+            background: #112240; 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-bottom: 3px solid #f39c12; 
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; font-weight: bold; }
+        
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+
+        .pubg-banner {
+            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+            border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            color: #112240;
+        }
+        .pubg-banner h2 { margin: 0; font-size: 22px; text-transform: uppercase; font-weight: 800; }
+
+        .input-group { 
+            background: #112240; 
+            padding: 20px; 
+            border-radius: 15px; 
+            border: 1px solid #1f3a5f; 
+            margin-bottom: 20px; 
+        }
+        .input-group label { display: block; margin-bottom: 10px; font-weight: bold; color: #f39c12; }
+        .input-group input { 
+            width: 100%; padding: 14px; 
+            background: #0a192f; 
+            border: 1px solid #1f3a5f; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            color: #fff; 
+            box-sizing: border-box; 
+            outline: none; 
+        }
+        .input-group input:focus { border-color: #f39c12; box-shadow: 0 0 8px rgba(243, 156, 18, 0.4); }
+
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-card {
+            background: #112240; padding: 20px; 
+            border-radius: 12px; border: 2px solid #1f3a5f;
+            cursor: pointer; text-align: center; transition: 0.3s;
+        }
+        .item-card.selected { 
+            border-color: #f39c12; 
+            background: #1a365d; 
+            transform: translateY(-5px); 
+        }
+        .uc-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+        .uc-amount { display: block; font-weight: bold; font-size: 17px; margin-bottom: 5px; }
+        .price { font-size: 14px; color: #f39c12; font-weight: bold; }
+
+        .buy-btn { 
+            width: 100%; 
+            background: #f39c12; 
+            color: #112240; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 30px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-top: 30px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3); 
+            transition: 0.2s; 
+        }
+        .buy-btn:active { transform: scale(0.98); }
+        .buy-btn:disabled { background: #444; color: #888; box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div style="font-weight: bold; font-size: 18px;">PUBG Mobile UC</div>
+</div>
+
+<div class="container">
+    <div class="pubg-banner">
+        <h2>UC RECHARGE CENTER</h2>
+        <p style="margin: 5px 0 0; font-size: 12px; font-weight: bold;">Instant Delivery within 5-10 Mins</p>
+    </div>
+
+    <div class="input-group">
+        <label>Character ID (Numeric)</label>
+        <input type="number" id="player-id" placeholder="PUBG Player ID ရိုက်ထည့်ပါ">
+    </div>
+
+    <label style="font-weight: bold; margin-bottom: 15px; display: block; color: #f39c12;">UC ပမာဏ ရွေးချယ်ပါ</label>
+    <div class="items-grid">
+        <div class="item-card" onclick="selectItem(this, '60 UC', 2500)">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">60 UC</span>
+            <span class="price">2,500 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '325 UC', 12000)">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">325 UC</span>
+            <span class="price">12,000 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '660 UC', 23500)">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">660 UC</span>
+            <span class="price">23,500 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1800 UC', 58000)">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">1800 UC</span>
+            <span class="price">58,000 K</span>
+        </div>
+    </div>
+
+    <button class="buy-btn" id="buyBtn" onclick="processPurchase()">ဝယ်ယူမည်</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+// ... အပေါ်က import စာကြောင်းတွေ ...
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+  authDomain: "johnny-gaming-shop.firebaseapp.com",
+  projectId: "johnny-gaming-shop",
+  storageBucket: "johnny-gaming-shop.firebasestorage.app",
+  messagingSenderId: "833081291484",
+  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
+  measurementId: "G-ECKGE175LZ"
+};
+
+// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let selectedItem = "";
+    let selectedPrice = 0;
+
+    window.selectItem = (el, name, price) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItem = name;
+        selectedPrice = price;
+    };
+
+    async function sendAdminNotify(details) {
+        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const chat_id = "6427719618";
+        
+        const message = `
+🔫 **PUBG ORDER - SO SHOP**
+━━━━━━━━━━━━━━━━━━
+🆔 **Player ID:** ${details.id}
+💰 **UC Amount:** ${details.item}
+💵 **Price:** ${details.price} Ks
+📧 **Buyer:** ${details.email}
+━━━━━━━━━━━━━━━━━━
+သားကြီး... UC အမြန်ဖြည့်ပေးလိုက်တော့! 🔥`;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+        try { await fetch(url); } catch (e) { console.error(e); }
+    }
+
+    window.processPurchase = async () => {
+        const user = auth.currentUser;
+        if(!user) return alert("Login အရင်ဝင်ပါ");
+
+        const playerID = document.getElementById('player-id').value;
+        if(!playerID) return alert("Player ID ထည့်ပါ");
+        if(selectedPrice === 0) return alert("UC ပမာဏ ရွေးပါ");
+
+        const btn = document.getElementById('buyBtn');
+        btn.disabled = true;
+
+        try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if((userSnap.data().balance || 0) < selectedPrice) {
+                alert("လက်ကျန်ငွေ မလောက်ပါဘူး");
+                btn.disabled = false;
+                return;
+            }
+
+            await updateDoc(userRef, {
+                balance: increment(-selectedPrice),
+                total_spent: increment(selectedPrice)
+            });
+
+            await addDoc(collection(db, "users", user.uid, "purchases"), {
+                game: "PUBG Mobile",
+                player: playerID,
+                item: selectedItem,
+                price: selectedPrice,
+                status: "pending",
+                time: serverTimestamp()
+            });
+
+            await sendAdminNotify({
+                id: playerID,
+                item: selectedItem,
+                price: selectedPrice,
+                email: user.email
+            });
+
+            alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin မှ ခေတ္တခဏအတွင်း ဖြည့်ပေးပါမည်။");
+            window.location.href = "history.html";
+
+        } catch (error) {
+            alert("Error: " + error.message);
+            btn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>

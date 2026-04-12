@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Johnny Gaming Shop</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #001f3f; color: #fff; }
+        .admin-header { background: #00152b; color: #0072BC; padding: 20px; text-align: center; font-weight: bold; font-size: 20px; border-bottom: 2px solid #0072BC; }
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+        
+        /* PIN Overlay */
+        #pin-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #00152b; z-index: 9999; display: flex;
+            align-items: center; justify-content: center; flex-direction: column;
+        }
+        .pin-box { background: white; padding: 30px; border-radius: 15px; text-align: center; color: #333; width: 80%; max-width: 300px; }
+        .pin-input { width: 100%; padding: 15px; font-size: 24px; text-align: center; letter-spacing: 5px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; outline: none; }
+
+        #admin-content { display: none; }
+
+        .admin-card { background: #002d5a; padding: 20px; border-radius: 15px; border: 1px solid #004080; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #00AEEF; }
+        input, textarea { width: 100%; padding: 12px; background: #00152b; border: 1px solid #004080; border-radius: 8px; color: #fff; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; outline: none; }
+        
+        .user-preview { background: #004080; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; border-left: 5px solid #00AEEF; }
+        
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        .btn-search { background: #0072BC; color: white; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-msg { background: #6f42c1; color: white; }
+        .btn-nav { background: #444; color: white; text-decoration: none; text-align: center; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; border:none; }
+        .nav-btns { display: flex; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="pin-overlay">
+    <div class="pin-box">
+        <h3 style="margin-top:0;">Boss Only</h3>
+        <p>Admin PIN ရိုက်ထည့်ပါ</p>
+        <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="****">
+        <button class="btn btn-search" onclick="verifyPin()">ဝင်မည်</button>
+    </div>
+</div>
+
+<div id="admin-content">
+    <div class="admin-header">JOHNNY ADMIN CONTROL</div>
+    <div class="container">
+        <div class="admin-card">
+            <label>User UID (User Profile ကနေကူးလာပါ)</label>
+            <input type="text" id="target-uid" placeholder="UID ကို ဒီမှာ Paste လုပ်ပါ">
+            <button class="btn btn-search" onclick="checkUser()">Check User</button>
+
+            <div id="user-info" class="user-preview">
+                <div id="display-email">Email: </div>
+                <div id="display-balance" style="font-weight: bold; color: #28a745; font-size: 18px; margin-top: 5px;">လက်ရှိ Balance: 0 Ks</div>
+            </div>
+
+            <div id="action-section" style="display: none; border-top: 1px solid #004080; padding-top: 15px;">
+                <label>ပိုက်ဆံဖြည့်ရန် (Amount)</label>
+                <input type="number" id="amount" placeholder="ဥပမာ - 5000">
+                <button class="btn btn-add" id="add-btn" onclick="updateBalance()">Balance ထည့်မည်</button>
+
+                <label style="margin-top: 15px;">User ဆီ စာပို့ရန်</label>
+                <textarea id="admin-msg" placeholder="ဥပမာ - ပိုက်ဆံ ၅၀၀၀ ဖြည့်သွင်းမှု အောင်မြင်ပါသည်"></textarea>
+                <button class="btn btn-msg" onclick="sendMessage()">စာပို့မည်</button>
+            </div>
+        </div>
+
+        <div class="nav-btns">
+            <a href="index.html" class="btn-nav">Home Page</a>
+            <button class="btn-nav" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const ADMIN_EMAIL = "playeraung449@gmail.com";
+    const ADMIN_PIN = "2009"; 
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) { 
+            window.location.href = "login.html"; 
+        }
+    });
+
+    window.verifyPin = function() {
+        const input = document.getElementById('pin-input').value;
+        if (input === ADMIN_PIN) {
+            document.getElementById('pin-overlay').style.display = "none";
+            document.getElementById('admin-content').style.display = "block";
+        } else {
+            alert("PIN မှားယွင်းနေပါသည်။");
+            document.getElementById('pin-input').value = "";
+        }
+    }
+
+    window.checkUser = async function() {
+        const uid = document.getElementById('target-uid').value.trim();
+        if(!uid) return alert("UID အရင်ထည့်ပါ");
+        
+        try {
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if(docSnap.exists()){
+                const userData = docSnap.data();
+                document.getElementById('display-email').innerText = "Email: " + userData.email;
+                document.getElementById('display-balance').innerText = "လက်ရှိ Balance: " + (userData.balance || 0) + " Ks";
+                document.getElementById('user-info').style.display = "block";
+                document.getElementById('action-section').style.display = "block";
+            } else { alert("အကောင့်ရှာမတွေ့ပါ"); }
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    window.updateBalance = async function() {
+        const uid = document.getElementById('target-uid').value.trim();
+        const amt = parseInt(document.getElementById('amount').value);
+        if(!amt || amt <= 0) return alert("ပမာဏ မှန်အောင်ထည့်ပါ");
+
+        if(confirm(amt + " Ks ဖြည့်သွင်းမှာ သေချာလား?")) {
+            try {
+                await updateDoc(doc(db, "users", uid), { 
+                    balance: increment(amt) 
+                });
+                alert("ပိုက်ဆံဖြည့်ပြီးပါပြီ");
+                checkUser(); // Balance အသစ်ကို ချက်ချင်းပြန်ပြဖို့
+                document.getElementById('amount').value = "";
+            } catch (e) { alert("Error: " + e.message); }
+        }
+    }
+
+    window.sendMessage = async function() {
+        const uid = document.getElementById('target-uid').value.trim();
+        const msg = document.getElementById('admin-msg').value;
+        if(!msg) return alert("စာအရင်ရိုက်ပါ");
+
+        try {
+            await addDoc(collection(db, "users", uid, "notifications"), {
+                text: msg, 
+                time: serverTimestamp(), 
+                read: false,
+                type: "admin_msg"
+            });
+            alert("စာပို့ပြီးပါပြီ");
+            document.getElementById('admin-msg').value = "";
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    window.logout = () => signOut(auth).then(() => window.location.href = "login.html");
+</script>
+
+</body>
+</html>

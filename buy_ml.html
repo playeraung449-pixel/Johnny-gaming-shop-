@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy MLBB Diamonds - So Gaming Shop</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        .header { background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d); padding: 20px; color: white; display: flex; align-items: center; gap: 15px; }
+        .back-btn { text-decoration: none; color: white; font-size: 24px; }
+        .container { padding: 20px; }
+
+        .input-group { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+        .id-inputs { display: flex; gap: 10px; }
+        .id-inputs input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .item-card { background: white; padding: 15px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s; }
+        .item-card.selected { border-color: #b21f1f; background: #fff5f5; }
+        .dm-amount { display: block; font-weight: bold; color: #333; font-size: 15px; }
+        .price { font-size: 13px; color: #b21f1f; font-weight: bold; }
+
+        .buy-btn { width: 100%; background: #00A651; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,166,81,0.3); }
+        .buy-btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div style="font-weight: bold;">MLBB Diamonds Topup</div>
+</div>
+
+<div class="container">
+    <div class="input-group">
+        <label>Player ID & Server ID</label>
+        <div class="id-inputs">
+            <input type="number" id="player-id" placeholder="Player ID">
+            <input type="number" id="server-id" placeholder="(Server)">
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 10px;">* ID နှင့် Server မှန်ကန်ပါစေ။</p>
+    </div>
+
+    <label style="font-weight: bold; margin-bottom: 10px; display: block;">Diamonds ရွေးချယ်ပါ</label>
+    <div class="items-grid">
+        <div class="item-card" onclick="selectItem(this, '86 Diamonds', 2200)">
+            <span class="dm-amount">💎 86 Diamonds</span>
+            <span class="price">2,200 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '172 Diamonds', 4400)">
+            <span class="dm-amount">💎 172 Diamonds</span>
+            <span class="price">4,400 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '257 Diamonds', 6500)">
+            <span class="dm-amount">💎 257 Diamonds</span>
+            <span class="price">6,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '706 Diamonds', 17500)">
+            <span class="dm-amount">💎 706 Diamonds</span>
+            <span class="price">17,500 Ks</span>
+        </div>
+    </div>
+
+    <button class="buy-btn" id="buyBtn" onclick="confirmPurchase()">ဝယ်ယူမည်</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+    // Firebase Config (မင်းရဲ့ ကိုယ်ပိုင် Key တွေ ပြန်ထည့်ပါ)
+    const firebaseConfig = { 
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let selectedItemName = "";
+    let selectedItemPrice = 0;
+
+    window.selectItem = (el, name, price) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItemName = name;
+        selectedItemPrice = price;
+    };
+
+    // Admin ဆီ Telegram Message ပို့ခြင်း
+    async function sendToAdmin(details) {
+        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const chat_id = "6427719618";
+        
+        const message = `
+🎮 **SO GAMING SHOP - MLBB ORDER**
+━━━━━━━━━━━━━━━━━━
+📊 **ဂိမ်း:** Mobile Legends
+🆔 **ID/Server:** ${details.playerID}
+💎 **ပစ္စည်း:** ${details.itemName}
+💰 **ကျသင့်ငွေ:** ${details.price} Ks
+📧 **ဝယ်သူ:** ${details.userEmail}
+━━━━━━━━━━━━━━━━━━
+သားကြီး... Diamond အမြန်ဝင်ဖြည့်ပေးလိုက်တော့! ⚔️`;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+        try { await fetch(url); } catch (e) { console.error(e); }
+    }
+
+    window.confirmPurchase = async () => {
+        const user = auth.currentUser;
+        if(!user) return alert("Login အရင်ဝင်ပါ");
+
+        const pid = document.getElementById('player-id').value;
+        const sid = document.getElementById('server-id').value;
+        
+        if(!pid || !sid) return alert("ID နဲ့ Server အပြည့်စုံဖြည့်ပါ");
+        if(selectedItemPrice === 0) return alert(" Diamonds အရင်ရွေးပါ");
+
+        const btn = document.getElementById('buyBtn');
+        btn.disabled = true;
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if((userSnap.data().balance || 0) < selectedItemPrice) {
+            alert("လက်ကျန်ငွေ မလောက်ပါဘူး သားကြီး");
+            btn.disabled = false;
+            return;
+        }
+
+        // 1. Firebase စာရင်းသွင်း
+        await updateDoc(userRef, {
+            balance: increment(-selectedItemPrice),
+            total_spent: increment(selectedItemPrice),
+            spinCount: increment(1)
+        });
+
+        await addDoc(collection(db, "users", user.uid, "purchases"), {
+            gameName: "Mobile Legends",
+            playerID: `${pid} (${sid})`,
+            itemName: selectedItemName,
+            price: selectedItemPrice,
+            status: "pending",
+            time: serverTimestamp()
+        });
+
+        // 2. Telegram Notification ပို့
+        await sendToAdmin({
+            playerID: `${pid} (${sid})`,
+            itemName: selectedItemName,
+            price: selectedItemPrice,
+            userEmail: user.email
+        });
+
+        alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin ဆီ အမှာစာပို့လိုက်ပါပြီ။");
+        window.location.href = "history.html";
+    };
+</script>
+</body>
+</html>

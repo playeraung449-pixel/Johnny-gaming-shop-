@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Robux - So Gaming Shop</title>
+    <style>
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #001f3f; 
+            color: #fff; 
+        }
+        .header { 
+            background: #003366; 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-bottom: 3px solid #007bff; 
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; font-weight: bold; }
+        
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+
+        .robux-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.4);
+        }
+        .robux-header h2 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .input-group { 
+            background: #002d5a; 
+            padding: 20px; 
+            border-radius: 15px; 
+            border: 1px solid #004080; 
+            margin-bottom: 20px; 
+        }
+        .input-group label { display: block; margin-bottom: 10px; font-weight: bold; color: #b3d7ff; }
+        .input-group input { 
+            width: 100%; padding: 14px; 
+            background: #001f3f; 
+            border: 1px solid #0056b3; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            color: #fff; 
+            box-sizing: border-box; 
+            outline: none; 
+        }
+        .input-group input:focus { border-color: #00a2ff; box-shadow: 0 0 8px rgba(0,162,255,0.5); }
+
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .item-card {
+            background: #002d5a; padding: 20px; 
+            border-radius: 12px; border: 2px solid #004080;
+            cursor: pointer; text-align: center; transition: 0.3s;
+        }
+        .item-card.selected { 
+            border-color: #00a2ff; 
+            background: #003d7a; 
+            transform: translateY(-5px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .robux-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+        .robux-amount { display: block; font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+        .price { font-size: 14px; color: #00a2ff; font-weight: bold; }
+
+        .buy-btn { 
+            width: 100%; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 30px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-top: 30px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3); 
+            transition: 0.2s; 
+        }
+        .buy-btn:active { transform: scale(0.98); }
+        .buy-btn:disabled { background: #444; box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div style="font-weight: bold; font-size: 18px;">Robux Store</div>
+</div>
+
+<div class="container">
+    <div class="robux-header">
+        <h2>ROBUX TOPUP</h2>
+        <p style="margin: 5px 0 0; font-size: 13px; opacity: 0.9;">Fast & Secure Delivery</p>
+    </div>
+
+    <div class="input-group">
+        <label>Roblox Username</label>
+        <input type="text" id="rob-username" placeholder="Username ရိုက်ထည့်ပါ">
+    </div>
+
+    <label style="font-weight: bold; margin-bottom: 15px; display: block; color: #b3d7ff;">ဝယ်ယူမည့် ပမာဏ ရွေးပါ</label>
+    <div class="items-grid">
+        <div class="item-card" onclick="selectItem(this, '400 Robux', 8500)">
+            <span class="robux-icon">🪙</span>
+            <span class="robux-amount">400 R$</span>
+            <span class="price">8,500 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '800 Robux', 16500)">
+            <span class="robux-icon">🪙</span>
+            <span class="robux-amount">800 R$</span>
+            <span class="price">16,500 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1700 Robux', 33000)">
+            <span class="robux-icon">🪙</span>
+            <span class="robux-amount">1700 R$</span>
+            <span class="price">33,000 K</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '4500 Robux', 85000)">
+            <span class="robux-icon">🪙</span>
+            <span class="robux-amount">4500 R$</span>
+            <span class="price">85,000 K</span>
+        </div>
+    </div>
+
+    <button class="buy-btn" id="buyBtn" onclick="processPurchase()">ဝယ်ယူမည်</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+
+    // --- မင်းရဲ့ Firebase Config ကို ဒီအောက်မှာ အစားထိုးပါ ---
+    // ... အပေါ်က import စာကြောင်းတွေ ...
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+  authDomain: "johnny-gaming-shop.firebaseapp.com",
+  projectId: "johnny-gaming-shop",
+  storageBucket: "johnny-gaming-shop.firebasestorage.app",
+  messagingSenderId: "833081291484",
+  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
+  measurementId: "G-ECKGE175LZ"
+};
+
+// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let selectedItem = "";
+    let selectedPrice = 0;
+
+    window.selectItem = (el, name, price) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItem = name;
+        selectedPrice = price;
+    };
+
+    async function sendAdminNotify(details) {
+        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const chat_id = "6427719618";
+        
+        const message = `
+🪙 **ROBUX ORDER - SO SHOP**
+━━━━━━━━━━━━━━━━━━
+👤 **User:** ${details.user}
+💰 **Amount:** ${details.item}
+💵 **Price:** ${details.price} Ks
+📧 **Buyer:** ${details.email}
+━━━━━━━━━━━━━━━━━━
+သားကြီး... Robux အမြန်ပို့လိုက်တော့! 🔥`;
+
+        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
+        try { await fetch(url); } catch (e) { console.error(e); }
+    }
+
+    window.processPurchase = async () => {
+        const user = auth.currentUser;
+        if(!user) return alert("Login အရင်ဝင်ပါ");
+
+        const robuxUser = document.getElementById('rob-username').value;
+        if(!robuxUser) return alert("Username ထည့်ပါ");
+        if(selectedPrice === 0) return alert("ပမာဏ ရွေးပါ");
+
+        const btn = document.getElementById('buyBtn');
+        btn.disabled = true;
+
+        try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+
+            if((userSnap.data().balance || 0) < selectedPrice) {
+                alert("လက်ကျန်ငွေ မလောက်ပါဘူး");
+                btn.disabled = false;
+                return;
+            }
+
+            // Firebase update balance
+            await updateDoc(userRef, {
+                balance: increment(-selectedPrice),
+                total_spent: increment(selectedPrice)
+            });
+
+            // Add to purchase history
+            await addDoc(collection(db, "users", user.uid, "purchases"), {
+                game: "Robux",
+                player: robuxUser,
+                item: selectedItem,
+                price: selectedPrice,
+                status: "pending",
+                time: serverTimestamp()
+            });
+
+            // Send Telegram Notification
+            await sendAdminNotify({
+                user: robuxUser,
+                item: selectedItem,
+                price: selectedPrice,
+                email: user.email
+            });
+
+            alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ ၅ မိနစ်အတွင်း ပို့ပေးပါမည်။");
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error(error);
+            alert("တစ်ခုခုမှားယွင်းနေပါသည်။");
+            btn.disabled = false;
+        }
+    };
+</script>
+
+</body>
+</html>

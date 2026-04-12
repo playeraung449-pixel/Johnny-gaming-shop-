@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Spin - Johnny Gaming Shop</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh; text-align: center; color: white;
+        }
+        .header { background: white; padding: 15px; display: flex; align-items: center; gap: 15px; color: #333; }
+        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
+
+        /* Wheel Design */
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 40px auto; }
+        #wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 5px solid white; position: relative; overflow: hidden;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+        .pointer {
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 40px; background: yellow; clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 10;
+        }
+
+        /* Spin Button */
+        .spin-btn {
+            background: #FFD700; color: #333; border: none; padding: 15px 40px;
+            font-size: 20px; font-weight: bold; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-top: 20px;
+        }
+        .spin-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        .info-text { margin-top: 20px; font-size: 14px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; display: inline-block; }
+
+        /* Modal */
+        #result-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content { background: white; color: #333; padding: 30px; border-radius: 20px; width: 80%; max-width: 300px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <b style="font-size: 18px;">Lucky Spin</b>
+</div>
+
+<div class="wheel-container">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="300" height="300"></canvas>
+</div>
+
+<button class="spin-btn" id="spinBtn" onclick="startSpin()">SPIN</button>
+
+<div class="info-text">
+    လက်ကျန် Spin: <span id="spin-count">0</span> ကြိမ်
+</div>
+
+<div id="result-modal">
+    <div class="modal-content">
+        <h2 id="result-title">ဂုဏ်ယူပါတယ်!</h2>
+        <p id="result-msg"></p>
+        <button onclick="closeModal()" style="width:100%; padding:10px; background:#0072BC; color:white; border:none; border-radius:10px;">အိုကေ</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const items = [
+        { label: "လျှော့ဈေး", color: "#FF5733", prob: 40 },
+        { label: "၅၀ ကျပ်", color: "#33FF57", prob: 90 },
+        { label: "ကျေးဇူးတင်ပါသည်", color: "#3357FF", prob: 99 },
+        { label: "၂၀၀ ကျပ်", color: "#F333FF", prob: 60 },
+        { label: "Free Spin 2", color: "#FF33A1", prob: 30 },
+        { label: "Starlight 1", color: "#FFD700", prob: 0.01 }
+    ];
+
+    let currentSpinCount = 0;
+    let currentUser = null;
+
+    // Draw Wheel
+    function drawWheel() {
+        const arc = (2 * Math.PI) / items.length;
+        items.forEach((item, i) => {
+            const angle = i * arc;
+            ctx.fillStyle = item.color;
+            ctx.beginPath(); ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 150, angle, angle + arc);
+            ctx.fill();
+            ctx.save();
+            ctx.translate(150, 150); ctx.rotate(angle + arc / 2);
+            ctx.fillStyle = "white"; ctx.font = "bold 12px Arial";
+            ctx.fillText(item.label, 60, 5); ctx.restore();
+        });
+    }
+    drawWheel();
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user) window.location.href = "login.html";
+        currentUser = user;
+        onSnapshot(doc(db, "users", user.uid), (d) => {
+            currentSpinCount = d.data().spinCount || 0;
+            document.getElementById('spin-count').innerText = currentSpinCount;
+            document.getElementById('spinBtn').disabled = currentSpinCount <= 0;
+        });
+    });
+
+    window.startSpin = async () => {
+        if (currentSpinCount <= 0) return;
+        document.getElementById('spinBtn').disabled = true;
+
+        // Probability Logic
+        let rand = Math.random() * 100;
+        let selectedIndex = 2; // Default ကျေးဇူးတင်ပါသည်
+        
+        // Probability Check (အချိုးအစားအလိုက် ရွေးချယ်မှု)
+        if (rand < 0.01) selectedIndex = 5;
+        else if (rand < 30) selectedIndex = 4;
+        else if (rand < 40) selectedIndex = 0;
+        else if (rand < 60) selectedIndex = 3;
+        else if (rand < 90) selectedIndex = 1;
+
+        const rotation = 3600 + (selectedIndex * 60) + 30; // 60 deg per slice
+        canvas.style.transform = `rotate(-${rotation}deg)`;
+
+        // Spin နှုတ်မယ်
+        await updateDoc(doc(db, "users", currentUser.uid), { spinCount: increment(-1) });
+
+        setTimeout(async () => {
+            const result = items[selectedIndex].label;
+            let msg = result;
+
+            if (result === "၅၀ ကျပ်") {
+                await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(50) });
+                msg = "၅၀ ကျပ်ကို လက်ကျန်ငွေထဲ ပေါင်းထည့်လိုက်ပါပြီ။";
+            } else if (result === "၂၀၀ ကျပ်") {
+                await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(200) });
+                msg = "၂၀၀ ကျပ်ကို လက်ကျန်ငွေထဲ ပေါင်းထည့်လိုက်ပါပြီ။";
+            } else if (result === "Free Spin 2") {
+                await updateDoc(doc(db, "users", currentUser.uid), { spinCount: increment(2) });
+                msg = "Spin ၂ ကြိမ် ထပ်ရပါပြီ!";
+            } else if (result === "Starlight 1") {
+                msg = "Starlight Card ပေါက်ပါတယ်။ Admin ကို ဆက်သွယ်ပါ။";
+            } else if (result === "လျှော့ဈေး") {
+                msg = "ဒီနေ့ဝယ်သမျှ game items တိုင်း ၁၀ ကျပ် လျှော့ပေးပါမယ်။";
+            }
+
+            document.getElementById('result-msg').innerText = msg;
+            document.getElementById('result-modal').style.display = "flex";
+        }, 4500);
+    };
+
+    window.closeModal = () => {
+        document.getElementById('result-modal').style.display = "none";
+        canvas.style.transition = "none"; canvas.style.transform = "rotate(0deg)";
+        setTimeout(() => { canvas.style.transition = "transform 4s cubic-bezier(0.15, 0, 0.15, 1)"; }, 50);
+    };
+</script>
+
+</body>
+</html>

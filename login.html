@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Johnny Gaming Shop</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+
+        .login-card {
+            background: white; width: 90%; max-width: 380px;
+            padding: 35px 25px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h2 { color: #0072BC; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .input-group { margin-bottom: 18px; position: relative; text-align: left; }
+        label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 6px; }
+        
+        input {
+            width: 100%; padding: 12px; border: 1.5px solid #eee;
+            border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: #00AEEF; background: #f9fdff; }
+
+        .eye-icon {
+            position: absolute; right: 12px; top: 32px;
+            cursor: pointer; font-size: 18px; color: #888;
+        }
+
+        .btn {
+            width: 100%; padding: 14px; background: #0072BC;
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            margin-top: 10px; transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 114, 188, 0.3);
+        }
+
+        .btn:active { transform: scale(0.97); }
+
+        .toggle-text {
+            margin-top: 25px; font-size: 14px; color: #666; cursor: pointer;
+        }
+
+        .toggle-text span { color: #0072BC; font-weight: bold; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2 id="form-title">အကောင့်ဝင်ရန်</h2>
+    
+    <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="example@gmail.com">
+    </div>
+
+    <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••">
+        <span class="eye-icon" id="togglePassword" onclick="eyeToggle()">👁️</span>
+    </div>
+
+    <button class="btn" id="main-btn" onclick="handleAuth()">Login ဝင်မည်</button>
+
+    <div class="toggle-text" onclick="toggleForm()">
+        <p id="toggle-p">အကောင့်မရှိသေးပါက <span id="toggle-link">ဒီမှာဖွင့်ပါ</span></p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    // မင်းပေးထားတဲ့ Config အသစ်
+    const firebaseConfig = {
+      apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+      authDomain: "johnny-gaming-shop.firebaseapp.com",
+      projectId: "johnny-gaming-shop",
+      storageBucket: "johnny-gaming-shop.firebasestorage.app",
+      messagingSenderId: "833081291484",
+      appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let isLogin = true;
+    const ADMIN_EMAIL = "playeraung449@gmail.com";
+    const ADMIN_PASS = "77422891"; // ပုံသေ Admin Password
+
+    // Password ကြည့်ရန်/ဖျောက်ရန်
+    window.eyeToggle = function() {
+        const passwordField = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePassword');
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.innerText = '🙈';
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.innerText = '👁️';
+        }
+    }
+
+    // Login နဲ့ Register ပုံစံပြောင်းရန်
+    window.toggleForm = function() {
+        isLogin = !isLogin;
+        document.getElementById('form-title').innerText = isLogin ? "အကောင့်ဝင်ရန်" : "အကောင့်အသစ်ဖွင့်ရန်";
+        document.getElementById('main-btn').innerText = isLogin ? "Login ဝင်မည်" : "အကောင့်ဖွင့်မည်";
+        document.getElementById('toggle-p').innerHTML = isLogin ? 'အကောင့်မရှိသေးပါက <span>ဒီမှာဖွင့်ပါ</span>' : 'အကောင့်ရှိပြီးသားဆိုလျှင် <span>Login ဝင်ပါ</span>';
+    }
+
+    // Login/Register လုပ်ဆောင်ချက်
+    window.handleAuth = async function() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if(!email || !password) return alert("Email နဲ့ Password ဖြည့်ပါဦး သားကြီး");
+
+        try {
+            if (isLogin) {
+                // Login လုပ်ငန်းစဉ်
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Admin ဖြစ်မဖြစ် စစ်ဆေးခြင်း
+                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                    if (password === ADMIN_PASS) {
+                        alert("Welcome Boss! Admin Panel သို့ ပို့ပေးပါမည်။");
+                        window.location.href = "admin.html";
+                    } else {
+                        alert("Admin Password မှားယွင်းနေပါသည်။ ရိုးရိုး User အဖြစ်သာ ဝင်ရောက်ပါမည်။");
+                        window.location.href = "index.html";
+                    }
+                } else {
+                    window.location.href = "index.html";
+                }
+            } else {
+                // Register လုပ်ငန်းစဉ်
+                // Admin Email နဲ့ ဖွင့်ရင် Password က 77422891 ဖြစ်ရမယ်
+                if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password !== ADMIN_PASS) {
+                    return alert("Admin အကောင့်ဖွင့်ရန် သတ်မှတ်ထားသော Password ကိုသာ သုံးရပါမည်။");
+                }
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Firestore ထဲမှာ User Data သိမ်းမယ်
+                await setDoc(doc(db, "users", user.uid), {
+                    email: email,
+                    balance: 0,
+                    total_spent: 0,
+                    spinCount: 0,
+                    role: (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) ? "admin" : "user",
+                    createdAt: serverTimestamp()
+                });
+
+                alert("အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါသည်။");
+                window.location.href = (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) ? "admin.html" : "index.html";
+            }
+        } catch (error) {
+            let errorMsg = "မှားယွင်းနေပါသည်- ";
+            if (error.code === 'auth/wrong-password') errorMsg = "Password မှားနေပါတယ်။";
+            else if (error.code === 'auth/user-not-found') errorMsg = "ဒီ Email နဲ့ အကောင့်မရှိသေးပါ။";
+            else if (error.code === 'auth/email-already-in-use') errorMsg = "ဒီ Email က အကောင့်ရှိပြီးသား ဖြစ်နေပါတယ်။";
+            else errorMsg += error.message;
+            alert(errorMsg);
+        }
+    }
+</script>
+
+</body>
+</html>

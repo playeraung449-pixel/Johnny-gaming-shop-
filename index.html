@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Johnny Gaming Shop</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #001f3f; color: #fff; overflow-x: hidden; }
+        
+        /* Header */
+        header { 
+            background: #00152b; padding: 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #007bff; position: sticky; top: 0; z-index: 100;
+        }
+        .menu-icon { font-size: 24px; cursor: pointer; color: #007bff; }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: #00152b; transition: 0.3s; z-index: 200;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding-top: 20px;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar a {
+            display: block; padding: 15px 25px; color: #fff;
+            text-decoration: none; border-bottom: 1px solid #002d5a; font-size: 15px;
+        }
+        .sidebar a:hover { background: #007bff; }
+        
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; z-index: 150;
+        }
+        .overlay.active { display: block; }
+
+        /* Profile & Balance Section */
+        .user-stats { 
+            background: linear-gradient(135deg, #007bff, #0056b3); 
+            margin: 15px; padding: 25px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .user-stats p { margin: 0; font-size: 13px; opacity: 0.9; }
+        .user-stats h2 { margin: 10px 0; font-size: 30px; font-weight: bold; }
+        .deposit-btn { 
+            display: inline-block; background: #fff; color: #007bff; 
+            padding: 8px 20px; border-radius: 20px; text-decoration: none; 
+            font-weight: bold; font-size: 13px; margin-top: 10px;
+        }
+
+        /* UID ပြမယ့်နေရာ (ဒါလေးပဲ အသစ်ထည့်ထားတာ) */
+        .uid-display {
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            display: inline-block;
+            margin-top: 5px;
+            cursor: pointer;
+            border: 1px dashed rgba(255,255,255,0.5);
+        }
+
+        /* Game Grid */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+        .game-card { 
+            background: #002d5a; border-radius: 15px; overflow: hidden; 
+            border: 1px solid #004080; text-align: center; text-decoration: none; color: white;
+            transition: 0.3s;
+        }
+        .game-card:active { transform: scale(0.95); }
+        .game-card img { width: 100%; height: 110px; object-fit: cover; }
+        .game-card p { margin: 10px 0; font-weight: bold; font-size: 14px; }
+
+        /* Footer Nav */
+        nav { 
+            display: flex; justify-content: space-around; background: #00152b; 
+            padding: 12px; position: fixed; bottom: 0; width: 100%; 
+            border-top: 1px solid #004080; z-index: 100;
+        }
+        nav a { color: #888; text-decoration: none; font-size: 11px; text-align: center; }
+        nav a.active { color: #007bff; }
+        nav i { display: block; font-size: 20px; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div style="padding: 25px; text-align: center; border-bottom: 1px solid #002d5a;">
+        <h2 style="color: #007bff; margin: 0; letter-spacing: 1px;">JOHNNY SHOP</h2>
+        <p id="menu-email" style="font-size: 11px; opacity: 0.6; margin-top: 5px;"></p>
+    </div>
+    <a href="index.html">🏠 ပင်မစာမျက်နှာ</a>
+    <a href="history.html">📜 ဝယ်ယူမှုမှတ်တမ်း</a>
+    <a href="payment_methods.html">💳 ငွေဖြည့်ရန်</a>
+    <a href="https://t.me/your_telegram_username">🎧 Admin သို့ ဆက်သွယ်ရန်</a>
+    <a href="admin.html" id="admin-link" style="display: none; color: #ffc107; font-weight: bold;">🛠 Admin Panel</a>
+    <a href="#" onclick="logout()" style="color: #ff4b2b;">🚪 အကောင့်ထွက်မည်</a>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<header>
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+    <div style="font-weight: bold; font-size: 18px; letter-spacing: 1px;">JOHNNY gaming SHOP</div>
+    <div style="width: 24px;"></div>
+</header>
+
+<div class="user-stats">
+    <p id="user-email">အကောင့်ဝင်နေသည်...</p>
+    <div class="uid-display" onclick="copyUID()">UID: <span id="user-uid">...</span> 📋</div>
+    
+    <h2 id="user-balance">0 K</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 12px; opacity: 0.8;">လက်ကျန်ငွေ</span>
+        <a href="payment_methods.html" class="deposit-btn">ငွေဖြည့်မည်</a>
+    </div>
+</div>
+
+<div class="grid-container">
+    <a href="buy_ml.html" class="game-card">
+        <img src="https://img.tapimg.com/market/l_icon/94be6a25695885f81881b9e59a8501e5_360.png">
+        <p>Mobile Legends</p>
+    </a>
+
+    <a href="buy_ff.html" class="game-card">
+        <img src="https://garenafreefire.online/wp-content/uploads/2023/06/free-fire-logo-png.webp">
+        <p>Free Fire</p>
+    </a>
+
+    <a href="buy_hok.html" class="game-card">
+        <img src="https://play-lh.googleusercontent.com/4S06S9H6_uT3R0k_qU_2G8o6Z-H-3qXF9pYj6N8kY9hR9k">
+        <p>Honor of Kings</p>
+    </a>
+
+    <a href="buy_pubg.html" class="game-card">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-4P-xK8pXpLqI_vjWz_Z7p2-2U2Z0o9Qog&s">
+        <p>PUBG Mobile</p>
+    </a>
+
+    <a href="buy_mc.html" class="game-card">
+        <img src="https://i.pinimg.com/736x/8a/8d/6c/8a8d6c703d7f00c5c6f50567e45690b2.jpg">
+        <p>Magic Chess</p>
+    </a>
+
+    <a href="buy_robux.html" class="game-card">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6f9Y_k2P2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y&s">
+        <p>Robux</p>
+    </a>
+
+    <a href="lucky_spin.html" class="game-card">
+        <img src="https://png.pngtree.com/png-vector/20220615/ourmid/pngtree-lucky-spin-wheel-game-and-win-prizes-png-image_5067272.png">
+        <p>Lucky Spin</p>
+    </a>
+
+    <a href="buy_others.html" class="game-card">
+        <img src="https://cdn-icons-png.flaticon.com/512/570/570223.png">
+        <p>Others</p>
+    </a>
+</div>
+    
+
+<div style="height: 80px;"></div>
+
+<nav>
+    <a href="index.html" class="active">🏠<br>Home</a>
+    <a href="message.html" class="active">📑<br>message</
+    <a href="history.html">📜<br>မှတ်တမ်းများ</a>
+    <a href="https://t.me/@Johnny_AZM">💬<br>adminနဲ့စကားပြောမယ်</a>
+    <a href="#" onclick="logout()">🚪<br>Logout</a>
+</nav>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+      authDomain: "johnny-gaming-shop.firebaseapp.com",
+      projectId: "johnny-gaming-shop",
+      storageBucket: "johnny-gaming-shop.firebasestorage.app",
+      messagingSenderId: "833081291484",
+      appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Sidebar Toggle (မင်းပေးထားတဲ့အတိုင်း)
+    window.toggleMenu = function() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    // UID Copy Function (အသစ်ထည့်ပေးထားတာ)
+    window.copyUID = function() {
+        const uid = document.getElementById('user-uid').innerText;
+        navigator.clipboard.writeText(uid).then(() => {
+            alert("UID ကို Copy ကူးပြီးပါပြီ Boss!");
+        });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('user-email').innerText = user.email;
+            document.getElementById('menu-email').innerText = user.email;
+            document.getElementById('user-uid').innerText = user.uid; // UID ပြပေးမယ်
+
+            // Balance ကို Real-time စောင့်ကြည့်မယ်
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('user-balance').innerText = (data.balance || 0) + " K";
+                    
+                    if (data.role === 'admin') {
+                        document.getElementById('admin-link').style.display = 'block';
+                    }
+                }
+            });
+        } else {
+            window.location.href = "login.html";
+        }
+    });
+
+    window.logout = () => {
+        if(confirm("အကောင့်ထွက်မှာ သေချာလား သားကြီး?")) {
+            signOut(auth).then(() => window.location.href = "login.html");
+        }
+    };
+
+</script>
+
+</body>
+</html>
