@@ -15,11 +15,12 @@
             background: white; padding: 20px;
             display: flex; align-items: center; gap: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
         }
         .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
         .header-title { font-size: 18px; font-weight: bold; color: #333; }
 
-        .history-container { padding: 15px; }
+        .history-container { padding: 15px; padding-bottom: 30px; }
         
         .history-card {
             background: white; padding: 15px; border-radius: 15px;
@@ -38,13 +39,14 @@
         .status-badge {
             display: inline-block; padding: 3px 12px; border-radius: 20px;
             font-size: 11px; font-weight: bold; margin-top: 8px;
+            transition: 0.3s;
         }
-        .st-pending { background: #E3F2FD; color: #1976D2; } /* ဆောင်ရွက်ဆဲ */
-        .st-success { background: #E8F5E9; color: #2E7D32; } /* အောင်မြင် */
+        .st-pending { background: #FFF9C4; color: #F57F17; } /* ဆောင်ရွက်ဆဲ - ဝါရောင်သန်းသန်း */
+        .st-success { background: #E8F5E9; color: #2E7D32; } /* အောင်မြင် - အစိမ်း */
 
         .date-text { font-size: 11px; color: #bbb; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; display: block; }
 
-        .no-data { text-align: center; color: white; margin-top: 60px; }
+        .no-data { text-align: center; color: white; margin-top: 60px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -55,12 +57,12 @@
 </div>
 
 <div class="history-container" id="history-list">
-    <div style="text-align:center; color:white; margin-top:30px;">ခဏစောင့်ပါ...</div>
+    <div style="text-align:center; color:white; margin-top:30px;">Loading...</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
     import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -76,40 +78,49 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // အမြဲ Login ဖြစ်နေစေရန်
+    setPersistence(auth, browserLocalPersistence);
+
     onAuthStateChanged(auth, (user) => {
         if (!user) {
             window.location.href = "login.html";
         } else {
             const listArea = document.getElementById('history-list');
             
-            // Purchase collections ထဲက data တွေကို ဆွဲထုတ်မယ်
             const historyRef = collection(db, "users", user.uid, "purchases");
             const q = query(historyRef, orderBy("time", "desc"));
 
+            // Real-time listen လုပ်မယ် (Admin ဘက်က Status ပြောင်းရင် ချက်ချင်းပေါ်မယ်)
             onSnapshot(q, (snapshot) => {
                 listArea.innerHTML = "";
 
                 if (snapshot.empty) {
-                    listArea.innerHTML = "<div class='no-data'>ဝယ်ယူထားသော မှတ်တမ်းမရှိသေးပါ</div>";
+                    listArea.innerHTML = "<div class='no-data'>ဝယ်ယူထားသော မှတ်တမ်းမရှိသေးပါ Boss! 🛒</div>";
                     return;
                 }
 
                 snapshot.forEach((doc) => {
                     const d = doc.data();
-                    const dateObj = d.time ? d.time.toDate() : new Date();
-                    const formattedDate = dateObj.toLocaleString('en-GB', { 
-                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
-                    });
+                    
+                    // Date Format ကို ပိုပြီး ရှင်းအောင် လုပ်ထားတယ်
+                    let formattedDate = "Just now";
+                    if (d.time) {
+                        const dateObj = d.time.toDate();
+                        formattedDate = dateObj.toLocaleString('en-GB', { 
+                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                        });
+                    }
 
-                    const statusClass = d.status === "success" ? "st-success" : "st-pending";
-                    const statusText = d.status === "success" ? "အောင်မြင်သည်" : "ဆောင်ရွက်နေဆဲ";
+                    const isSuccess = d.status === "success";
+                    const statusClass = isSuccess ? "st-success" : "st-pending";
+                    const statusText = isSuccess ? "အောင်မြင်သည် ✅" : "ဆောင်ရွက်နေဆဲ ⏳";
 
                     listArea.innerHTML += `
-                        <div class="history-card">
+                        <div class="history-card" style="border-left-color: ${isSuccess ? '#2E7D32' : '#F57F17'}">
                             <span class="game-name">${d.gameName || 'Game Topup'}</span>
                             
                             <div class="info-row">
-                                <span class="label">ဂိမ်း ID:</span>
+                                <span class="label">ဂိမ်း ID/Username:</span>
                                 <span class="value">${d.playerID || '-'}</span>
                             </div>
                             
@@ -129,6 +140,9 @@
                         </div>
                     `;
                 });
+            }, (error) => {
+                console.error("Snapshot Error: ", error);
+                listArea.innerHTML = "<div class='no-data'>ဒေတာဆွဲယူရာတွင် မှားယွင်းနေပါသည်။</div>";
             });
         }
     });
