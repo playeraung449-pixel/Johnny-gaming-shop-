@@ -34,29 +34,31 @@
         }
         .overlay.active { display: block; }
 
-        /* Profile & Balance Section */
+        /* User Profile Section */
         .user-stats { 
             background: linear-gradient(135deg, #007bff, #0056b3); 
             margin: 15px; padding: 25px; border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .user-stats p { margin: 0; font-size: 13px; opacity: 0.9; }
-        .user-stats h2 { margin: 10px 0; font-size: 30px; font-weight: bold; }
-        .deposit-btn { 
-            display: inline-block; background: #fff; color: #007bff; 
-            padding: 8px 20px; border-radius: 20px; text-decoration: none; 
-            font-weight: bold; font-size: 13px; margin-top: 10px;
-        }
-
+        .user-stats h2 { margin: 10px 0; font-size: 32px; font-weight: bold; color: #fff; }
+        
         .uid-display {
             background: rgba(0,0,0,0.2);
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 11px;
             display: inline-block;
-            margin-top: 5px;
+            margin-top: 8px;
             cursor: pointer;
             border: 1px dashed rgba(255,255,255,0.5);
+        }
+
+        .deposit-btn { 
+            display: inline-block; background: #fff; color: #007bff; 
+            padding: 10px 22px; border-radius: 20px; text-decoration: none; 
+            font-weight: bold; font-size: 13px; margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         /* Game Grid */
@@ -76,8 +78,8 @@
             padding: 12px; position: fixed; bottom: 0; width: 100%; 
             border-top: 1px solid #004080; z-index: 100;
         }
-        nav a { color: #888; text-decoration: none; font-size: 11px; text-align: center; }
-        nav a.active { color: #007bff; }
+        nav a { color: #888; text-decoration: none; font-size: 11px; text-align: center; transition: 0.3s; }
+        nav a.active { color: #007bff; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -85,14 +87,14 @@
 <div class="sidebar" id="sidebar">
     <div style="padding: 25px; text-align: center; border-bottom: 1px solid #002d5a;">
         <h2 style="color: #007bff; margin: 0; letter-spacing: 1px;">JOHNNY SHOP</h2>
-        <p id="menu-email" style="font-size: 11px; opacity: 0.6; margin-top: 5px;"></p>
+        <p id="menu-email" style="font-size: 11px; opacity: 0.6; margin-top: 8px; word-break: break-all;"></p>
     </div>
     <a href="index.html">🏠 ပင်မစာမျက်နှာ</a>
     <a href="history.html">📜 ဝယ်ယူမှုမှတ်တမ်း</a>
     <a href="recharge.html">💳 ငွေဖြည့်ရန်</a>
     <a href="https://t.me/Johnny_AZM">🎧 Admin သို့ ဆက်သွယ်ရန်</a>
     <a href="admin.html" id="admin-link" style="display: none; color: #ffc107; font-weight: bold;">🛠 Admin Panel</a>
-    <a href="#" onclick="logout()" style="color: #ff4b2b;">🚪 အကောင့်ထွက်မည်</a>
+    <a href="#" onclick="logout()" style="color: #ff4b2b; margin-top: 20px; border-top: 1px solid #333;">🚪 အကောင့်ထွက်မည်</a>
 </div>
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
@@ -104,60 +106,59 @@
 </header>
 
 <div class="user-stats">
-    <p id="user-email">အကောင့်ဝင်နေသည်...</p>
+    <p id="user-email">Loading email...</p>
     <div class="uid-display" onclick="copyUID()">UID: <span id="user-uid">...</span> 📋</div>
     
     <h2 id="user-balance">0 K</h2>
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 12px; opacity: 0.8;">လက်ကျန်ငွေ</span>
-        <a href="recharge.html"
-        class="deposit-btn">ငွေဖြည့်မည်</a>
+        <a href="recharge.html" class="deposit-btn">ငွေဖြည့်မည်</a>
     </div>
 </div>
 
 <div class="grid-container">
     <a href="buy_ml.html" class="game-card">
-        <img src="https://img.tapimg.com/market/l_icon/94be6a25695885f81881b9e59a8501e5_360.png">
+        <img src="https://img.tapimg.com/market/l_icon/94be6a25695885f81881b9e59a8501e5_360.png" alt="ML">
         <p>Mobile Legends</p>
     </a>
 
     <a href="buy_ff.html" class="game-card">
-        <img src="https://garenafreefire.online/wp-content/uploads/2023/06/free-fire-logo-png.webp">
+        <img src="https://garenafreefire.online/wp-content/uploads/2023/06/free-fire-logo-png.webp" alt="FF">
         <p>Free Fire</p>
     </a>
 
     <a href="buy_hok.html" class="game-card">
-        <img src="https://m.media-amazon.com/images/I/71YvRzV6Z6L.png">
+        <img src="https://m.media-amazon.com/images/I/71YvRzV6Z6L.png" alt="HOK">
         <p>Honor of Kings</p>
     </a>
 
     <a href="buy_pubg.html" class="game-card">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-4P-xK8pXpLqI_vjWz_Z7p2-2U2Z0o9Qog&s">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz-4P-xK8pXpLqI_vjWz_Z7p2-2U2Z0o9Qog&s" alt="PUBG">
         <p>PUBG Mobile</p>
     </a>
 
     <a href="buy_magic_chess.html" class="game-card">
-        <img src="https://i.pinimg.com/736x/8a/8d/6c/8a8d6c703d7f00c5c6f50567e45690b2.jpg">
+        <img src="https://i.pinimg.com/736x/8a/8d/6c/8a8d6c703d7f00c5c6f50567e45690b2.jpg" alt="Magic Chess">
         <p>Magic Chess</p>
     </a>
 
     <a href="buy_roblox.html" class="game-card">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Roblox_Logo_2022.svg/1200px-Roblox_Logo_2022.svg.png">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Roblox_Logo_2022.svg/1200px-Roblox_Logo_2022.svg.png" alt="Roblox">
         <p>Roblox</p>
     </a>
 
     <a href="lucky_spin.html" class="game-card">
-        <img src="https://png.pngtree.com/png-vector/20220615/ourmid/pngtree-lucky-spin-wheel-game-and-win-prizes-png-image_5067272.png">
+        <img src="https://png.pngtree.com/png-vector/20220615/ourmid/pngtree-lucky-spin-wheel-game-and-win-prizes-png-image_5067272.png" alt="Spin">
         <p>Lucky Spin</p>
     </a>
 
     <a href="buy_others.html" class="game-card">
-        <img src="https://cdn-icons-png.flaticon.com/512/570/570223.png">
+        <img src="https://cdn-icons-png.flaticon.com/512/570/570223.png" alt="Others">
         <p>Others</p>
     </a>
 </div>
 
-<div style="height: 80px;"></div>
+<div style="height: 100px;"></div>
 
 <nav>
     <a href="index.html" class="active">🏠<br>Home</a>
@@ -173,26 +174,28 @@
     import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
-      authDomain: "johnny-gaming-shop.firebaseapp.com",
-      projectId: "johnny-gaming-shop",
-      storageBucket: "johnny-gaming-shop.firebasestorage.app",
-      messagingSenderId: "833081291484",
-      appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Persistence သတ်မှတ်မယ် (ဒါမှ App ပြန်ဖွင့်ရင် Login မဝင်ခိုင်းမှာ)
+    // အကောင့်ထဲ အမြဲ Login ဖြစ်နေစေရန်
     setPersistence(auth, browserLocalPersistence);
 
+    // Sidebar Toggle
     window.toggleMenu = function() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('overlay').classList.toggle('active');
     }
 
+    // UID Copy Function
     window.copyUID = function() {
         const uid = document.getElementById('user-uid').innerText;
         if(uid !== "...") {
@@ -202,28 +205,38 @@
         }
     }
 
+    // Auth State Listen
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            // UI ပြောင်းလဲခြင်း
             document.getElementById('user-email').innerText = user.email;
             document.getElementById('menu-email').innerText = user.email;
             document.getElementById('user-uid').innerText = user.uid;
 
+            // Real-time Firestore Listen
             onSnapshot(doc(db, "users", user.uid), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    document.getElementById('user-balance').innerText = (data.balance || 0) + " K";
                     
+                    // Balance ကို ကော်မာလေးနဲ့ပြမယ်
+                    const balance = data.balance || 0;
+                    document.getElementById('user-balance').innerText = balance.toLocaleString() + " K";
+                    
+                    // Admin စစ်ဆေးခြင်း
                     if (data.role === 'admin') {
-                        const adminLink = document.getElementById('admin-link');
-                        if(adminLink) adminLink.style.display = 'block';
+                        document.getElementById('admin-link').style.display = 'block';
                     }
+                } else {
+                    document.getElementById('user-balance').innerText = "0 K";
                 }
             });
         } else {
+            // Login မဝင်ရသေးရင်
             window.location.href = "login.html";
         }
     });
 
+    // Logout Function
     window.logout = () => {
         if(confirm("အကောင့်ထွက်မှာ သေချာလား သားကြီး?")) {
             signOut(auth).then(() => window.location.href = "login.html");
