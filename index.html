@@ -48,7 +48,6 @@
             font-weight: bold; font-size: 13px; margin-top: 10px;
         }
 
-        /* UID ပြမယ့်နေရာ (ဒါလေးပဲ အသစ်ထည့်ထားတာ) */
         .uid-display {
             background: rgba(0,0,0,0.2);
             padding: 5px 10px;
@@ -79,7 +78,6 @@
         }
         nav a { color: #888; text-decoration: none; font-size: 11px; text-align: center; }
         nav a.active { color: #007bff; }
-        nav i { display: block; font-size: 20px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -92,7 +90,7 @@
     <a href="index.html">🏠 ပင်မစာမျက်နှာ</a>
     <a href="history.html">📜 ဝယ်ယူမှုမှတ်တမ်း</a>
     <a href="payment_methods.html">💳 ငွေဖြည့်ရန်</a>
-    <a href="https://t.me/your_telegram_username">🎧 Admin သို့ ဆက်သွယ်ရန်</a>
+    <a href="https://t.me/Johnny_AZM">🎧 Admin သို့ ဆက်သွယ်ရန်</a>
     <a href="admin.html" id="admin-link" style="display: none; color: #ffc107; font-weight: bold;">🛠 Admin Panel</a>
     <a href="#" onclick="logout()" style="color: #ff4b2b;">🚪 အကောင့်ထွက်မည်</a>
 </div>
@@ -128,7 +126,7 @@
     </a>
 
     <a href="buy_hok.html" class="game-card">
-        <img src="https://play-lh.googleusercontent.com/4S06S9H6_uT3R0k_qU_2G8o6Z-H-3qXF9pYj6N8kY9hR9k">
+        <img src="https://m.media-amazon.com/images/I/71YvRzV6Z6L.png">
         <p>Honor of Kings</p>
     </a>
 
@@ -143,7 +141,7 @@
     </a>
 
     <a href="buy_robux.html" class="game-card">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6f9Y_k2P2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y2Y&s">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Roblox_Logo_2022.svg/1200px-Roblox_Logo_2022.svg.png">
         <p>Robux</p>
     </a>
 
@@ -157,21 +155,20 @@
         <p>Others</p>
     </a>
 </div>
-    
 
 <div style="height: 80px;"></div>
 
 <nav>
     <a href="index.html" class="active">🏠<br>Home</a>
-    <a href="message.html" class="active">📑<br>message</
-    <a href="history.html">📜<br>မှတ်တမ်းများ</a>
-    <a href="https://t.me/@Johnny_AZM">💬<br>adminနဲ့စကားပြောမယ်</a>
+    <a href="message.html">📑<br>Message</a>
+    <a href="history.html">📜<br>မှတ်တမ်း</a>
+    <a href="https://t.me/Johnny_AZM">💬<br>Admin</a>
     <a href="#" onclick="logout()">🚪<br>Logout</a>
 </nav>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
     import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -187,34 +184,37 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Sidebar Toggle (မင်းပေးထားတဲ့အတိုင်း)
+    // Persistence သတ်မှတ်မယ် (ဒါမှ App ပြန်ဖွင့်ရင် Login မဝင်ခိုင်းမှာ)
+    setPersistence(auth, browserLocalPersistence);
+
     window.toggleMenu = function() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('overlay').classList.toggle('active');
     }
 
-    // UID Copy Function (အသစ်ထည့်ပေးထားတာ)
     window.copyUID = function() {
         const uid = document.getElementById('user-uid').innerText;
-        navigator.clipboard.writeText(uid).then(() => {
-            alert("UID ကို Copy ကူးပြီးပါပြီ Boss!");
-        });
+        if(uid !== "...") {
+            navigator.clipboard.writeText(uid).then(() => {
+                alert("UID ကို Copy ကူးပြီးပါပြီ သားကြီး!");
+            });
+        }
     }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('user-email').innerText = user.email;
             document.getElementById('menu-email').innerText = user.email;
-            document.getElementById('user-uid').innerText = user.uid; // UID ပြပေးမယ်
+            document.getElementById('user-uid').innerText = user.uid;
 
-            // Balance ကို Real-time စောင့်ကြည့်မယ်
             onSnapshot(doc(db, "users", user.uid), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     document.getElementById('user-balance').innerText = (data.balance || 0) + " K";
                     
                     if (data.role === 'admin') {
-                        document.getElementById('admin-link').style.display = 'block';
+                        const adminLink = document.getElementById('admin-link');
+                        if(adminLink) adminLink.style.display = 'block';
                     }
                 }
             });
@@ -228,8 +228,6 @@
             signOut(auth).then(() => window.location.href = "login.html");
         }
     };
-
 </script>
-
 </body>
 </html>
