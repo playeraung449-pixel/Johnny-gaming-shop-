@@ -79,10 +79,9 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getAuth, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    // မင်းပေးထားတဲ့ Config အသစ်
     const firebaseConfig = {
       apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
       authDomain: "johnny-gaming-shop.firebaseapp.com",
@@ -96,11 +95,21 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // အကောင့်ဝင်ထားတာ ရှိ၊ မရှိ အလိုအလျောက်စစ်ပြီး တန်းလွှတ်ပေးရန်
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if (user.email === "playeraung449@gmail.com") {
+                window.location.href = "admin.html";
+            } else {
+                window.location.href = "index.html";
+            }
+        }
+    });
+
     let isLogin = true;
     const ADMIN_EMAIL = "playeraung449@gmail.com";
-    const ADMIN_PASS = "77422891"; // ပုံသေ Admin Password
+    const ADMIN_PASS = "77422891";
 
-    // Password ကြည့်ရန်/ဖျောက်ရန်
     window.eyeToggle = function() {
         const passwordField = document.getElementById('password');
         const toggleIcon = document.getElementById('togglePassword');
@@ -113,7 +122,6 @@
         }
     }
 
-    // Login နဲ့ Register ပုံစံပြောင်းရန်
     window.toggleForm = function() {
         isLogin = !isLogin;
         document.getElementById('form-title').innerText = isLogin ? "အကောင့်ဝင်ရန်" : "အကောင့်အသစ်ဖွင့်ရန်";
@@ -121,7 +129,6 @@
         document.getElementById('toggle-p').innerHTML = isLogin ? 'အကောင့်မရှိသေးပါက <span>ဒီမှာဖွင့်ပါ</span>' : 'အကောင့်ရှိပြီးသားဆိုလျှင် <span>Login ဝင်ပါ</span>';
     }
 
-    // Login/Register လုပ်ဆောင်ချက်
     window.handleAuth = async function() {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
@@ -129,26 +136,23 @@
         if(!email || !password) return alert("Email နဲ့ Password ဖြည့်ပါဦး သားကြီး");
 
         try {
+            // Persistence သတ်မှတ်ခြင်း (Local Memory မှာ သိမ်းခိုင်းတာ)
+            await setPersistence(auth, browserLocalPersistence);
+
             if (isLogin) {
-                // Login လုပ်ငန်းစဉ်
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
                 
-                // Admin ဖြစ်မဖြစ် စစ်ဆေးခြင်း
                 if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
                     if (password === ADMIN_PASS) {
-                        alert("Welcome Boss! Admin Panel သို့ ပို့ပေးပါမည်။");
                         window.location.href = "admin.html";
                     } else {
-                        alert("Admin Password မှားယွင်းနေပါသည်။ ရိုးရိုး User အဖြစ်သာ ဝင်ရောက်ပါမည်။");
                         window.location.href = "index.html";
                     }
                 } else {
                     window.location.href = "index.html";
                 }
             } else {
-                // Register လုပ်ငန်းစဉ်
-                // Admin Email နဲ့ ဖွင့်ရင် Password က 77422891 ဖြစ်ရမယ်
                 if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password !== ADMIN_PASS) {
                     return alert("Admin အကောင့်ဖွင့်ရန် သတ်မှတ်ထားသော Password ကိုသာ သုံးရပါမည်။");
                 }
@@ -156,7 +160,6 @@
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Firestore ထဲမှာ User Data သိမ်းမယ်
                 await setDoc(doc(db, "users", user.uid), {
                     email: email,
                     balance: 0,
