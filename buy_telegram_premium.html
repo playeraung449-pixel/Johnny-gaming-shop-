@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy Telegram Premium - So Gaming Shop</title>
+    <title>Buy Telegram Premium - Johnny Gaming Shop</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
-        .header { background: #0088cc; padding: 20px; color: white; display: flex; align-items: center; gap: 15px; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #001f3f; color: #fff; }
+        .header { background: #00152b; padding: 20px; color: white; display: flex; align-items: center; gap: 15px; border-bottom: 2px solid #0088cc; }
         .back-btn { text-decoration: none; color: white; font-size: 24px; }
         .container { padding: 20px; }
         .premium-banner {
@@ -14,29 +14,29 @@
             border-radius: 15px; padding: 20px; color: white; text-align: center;
             margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,136,204,0.3);
         }
-        .input-group { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
+        .input-group { background: #002d5a; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 20px; border: 1px solid #004080; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #00aaff; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #004080; background: #00152b; color: white; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
         .pack-list { display: flex; flex-direction: column; gap: 12px; }
         .pack-card {
-            background: white; padding: 18px; border-radius: 15px;
+            background: #002d5a; padding: 18px; border-radius: 15px;
             border: 2px solid transparent; cursor: pointer; display: flex;
             justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: 0.2s;
         }
-        .pack-card.selected { border-color: #0088cc; background: #e1f5fe; }
-        .pack-info b { font-size: 16px; display: block; }
-        .pack-info span { font-size: 12px; color: #666; }
-        .pack-price { font-weight: bold; color: #0088cc; font-size: 17px; }
+        .pack-card.selected { border-color: #00aaff; background: #003a75; }
+        .pack-info b { font-size: 16px; display: block; color: white; }
+        .pack-info span { font-size: 12px; color: #888; }
+        .pack-price { font-weight: bold; color: #00aaff; font-size: 17px; }
         .buy-btn { width: 100%; background: #00A651; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,166,81,0.3); }
-        .buy-btn:disabled { background: #ccc; }
+        .buy-btn:disabled { background: #555; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <a href="buy_others.html" class="back-btn">‹</a>
-    <div style="font-weight: bold;">Telegram Premium Gift</div>
+    <div style="font-weight: bold; letter-spacing: 1px;">Telegram Premium Gift</div>
 </div>
 
 <div class="container">
@@ -51,7 +51,7 @@
         <p style="font-size: 11px; color: #888; margin-top: 8px;">* Gift ပို့ပေးရန်အတွက် Username (@ ပါအောင်) မှန်ကန်စွာ ရေးပေးပါ။</p>
     </div>
 
-    <label style="font-weight: bold; margin-bottom: 10px; display: block;">Package ရွေးချယ်ပါ</label>
+    <label style="font-weight: bold; margin-bottom: 10px; display: block; color: #00aaff;">Package ရွေးချယ်ပါ</label>
     <div class="pack-list">
         <div class="pack-card" onclick="selectPack(this, 'Premium (3 Months)', 35000)">
             <div class="pack-info">
@@ -82,25 +82,23 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
-// ... အပေါ်က import စာကြောင်းတွေ ...
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
-  authDomain: "johnny-gaming-shop.firebaseapp.com",
-  projectId: "johnny-gaming-shop",
-  storageBucket: "johnny-gaming-shop.firebasestorage.app",
-  messagingSenderId: "833081291484",
-  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
-  measurementId: "G-ECKGE175LZ"
-};
-
-// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // Persistence သတ်မှတ်ခြင်း
+    setPersistence(auth, browserLocalPersistence);
 
     let selectedPackName = "";
     let selectedPackPrice = 0;
@@ -117,68 +115,94 @@ const firebaseConfig = {
         const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
         const chat_id = "6427719618";
         
-        const message = `
-🌟 **JOHNNY GAMING SHOP - PREMIUM ORDER**
-━━━━━━━━━━━━━━━━━━
-📊 **ဝန်ဆောင်မှု:** Telegram Premium
-👤 **Username:** ${details.playerID}
-💎 **Package:** ${details.itemName}
-💰 **ကျသင့်ငွေ:** ${details.price} Ks
-📧 **ဝယ်သူ:** ${details.userEmail}
-━━━━━━━━━━━━━━━━━━
-သားကြီး... Premium Gift လေး အမြန်ပို့ပေးလိုက်ဦး! 🚀`;
+        const message = `🌟 *SO GAMING SHOP - PREMIUM ORDER*\n` +
+                        `━━━━━━━━━━━━━━━━━━\n` +
+                        `📊 *ဝန်ဆောင်မှု:* Telegram Premium\n` +
+                        `👤 *Username:* ${details.playerID}\n` +
+                        `💎 *Package:* ${details.itemName}\n` +
+                        `💰 *ကျသင့်ငွေ:* ${details.price} Ks\n` +
+                        `📧 *ဝယ်သူ:* ${details.userEmail}\n` +
+                        `━━━━━━━━━━━━━━━━━━\n` +
+                        `သားကြီး... Premium Gift လေး အမြန်ပို့ပေးလိုက်ဦး! 🚀`;
 
-        const url = `https://api.telegram.org/bot${8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A}/sendMessage?chat_id=${6427719618}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-        try { await fetch(url); } catch (e) { console.error("Admin Notify Error:", e); }
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
+        
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chat_id,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { 
+            console.error("Admin Notify Error:", e); 
+        }
     }
 
     window.confirmPremiumPurchase = async () => {
         const user = auth.currentUser;
         if(!user) return alert("Login အရင်ဝင်ပါ");
 
-        const username = document.getElementById('tg-username').value;
+        const username = document.getElementById('tg-username').value.trim();
         if(!username.startsWith('@')) return alert("Username ကို @ ပါအောင် မှန်ကန်စွာ ရေးပေးပါ");
         if(selectedPackPrice === 0) return alert("Package အရင်ရွေးပါ");
 
         const btn = document.getElementById('buyBtn');
         btn.disabled = true;
 
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if((userSnap.data().balance || 0) < selectedPackPrice) {
-            alert("လက်ကျန်ငွေ မလုံလောက်ပါ။ ငွေအရင်ဖြည့်ပါ။");
+        try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            
+            if(!userSnap.exists() || (userSnap.data().balance || 0) < selectedPackPrice) {
+                alert("လက်ကျန်ငွေ မလုံလောက်ပါ။ ငွေအရင်ဖြည့်ပါ။");
+                btn.disabled = false;
+                return;
+            }
+
+            // 1. Firebase တွင် အချက်အလက်သိမ်းခြင်း
+            await updateDoc(userRef, {
+                balance: increment(-selectedPackPrice),
+                total_spent: increment(selectedPackPrice),
+                spinCount: increment(1)
+            });
+
+            await addDoc(collection(db, "users", user.uid, "purchases"), {
+                gameName: "Telegram Premium",
+                playerID: username,
+                itemName: selectedPackName,
+                price: selectedPackPrice,
+                status: "pending",
+                time: serverTimestamp()
+            });
+
+            // 2. Telegram Admin ဆီ ပို့ခြင်း
+            await sendToAdmin({
+                playerID: username,
+                itemName: selectedPackName,
+                price: selectedPackPrice,
+                userEmail: user.email
+            });
+
+            alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin မှ Premium Gift ကို အမြန်ဆုံး ပို့ဆောင်ပေးပါမည်။");
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            alert("တစ်ခုခုမှားယွင်းနေပါတယ် သားကြီး။");
             btn.disabled = false;
-            return;
         }
-
-        // 1. Firebase တွင် အချက်အလက်သိမ်းခြင်း
-        await updateDoc(userRef, {
-            balance: increment(-selectedPackPrice),
-            total_spent: increment(selectedPackPrice),
-            spinCount: increment(1)
-        });
-
-        await addDoc(collection(db, "users", user.uid, "purchases"), {
-            gameName: "Telegram Premium",
-            playerID: username,
-            itemName: selectedPackName,
-            price: selectedPackPrice,
-            status: "pending",
-            time: serverTimestamp()
-        });
-
-        // 2. Telegram Admin ဆီ ပို့ခြင်း
-        await sendToAdmin({
-            playerID: username,
-            itemName: selectedPackName,
-            price: selectedPackPrice,
-            userEmail: user.email
-        });
-
-        alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin မှ Premium Gift ကို အမြန်ဆုံး ပို့ဆောင်ပေးပါမည်။");
-        window.location.href = "history.html";
     };
+
+    // Login စစ်ဆေးခြင်း
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "login.html";
+        }
+    });
 </script>
 </body>
 </html>
