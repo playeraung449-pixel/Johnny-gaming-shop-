@@ -31,44 +31,54 @@
         .btn-msg { background: #6f42c1; color: white; }
         .btn-nav { background: #444; color: white; text-decoration: none; text-align: center; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; border:none; }
         .nav-btns { display: flex; gap: 10px; margin-top: 20px; }
-/* အဟောင်းရှိပြီးသား .btn-done အောက်မှာ ဒါလေးထပ်ထည့်ပေးပါ */
-.btn-reject { 
-    background: #dc3545; 
-    color: white; 
-    padding: 8px; 
-    width: 100%; 
-    border-radius: 5px; 
-    border: none; 
-    font-weight: bold; 
-    cursor: pointer; 
-    margin-top: 5px; /* Done button နဲ့ ခြားဖို့ */
-}
-.btn-reject:hover { background: #c82333; }
 
-        /* အသစ်ထည့်ထားတဲ့ Purchase List Style */
+        /* အော်ဒါစာရင်းပိုင်း */
         .order-item { background: #00152b; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #004080; }
         .order-info { font-size: 13px; margin-bottom: 8px; }
         .btn-done { background: #ffc107; color: #000; padding: 8px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; }
+        
+        /* ✅ အသစ်ထည့်ထားတဲ့ Reject Button Style */
+        .btn-reject { 
+            background: #dc3545; 
+            color: white; 
+            padding: 8px; 
+            width: 100%; 
+            border-radius: 5px; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 5px;        }
+        .btn-reject:hover { background: #c82333; }
+        
         .status-success { color: #28a745; font-weight: bold; }
+        .status-rejected { color: #dc3545; font-weight: bold; }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .btn { padding: 12px; font-size: 14px; }
+            .pin-input { font-size: 20px; padding: 12px; }
+        }
     </style>
 </head>
 <body>
 
+<!-- 🔐 PIN Overlay -->
 <div id="pin-overlay">
     <div class="pin-box">
         <h3 style="margin-top:0;">Boss Only</h3>
         <p>Admin PIN ရိုက်ထည့်ပါ</p>
-        <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="****">
+        <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="****" autofocus onkeydown="if(event.key==='Enter') verifyPin()">
         <button class="btn btn-search" onclick="verifyPin()">ဝင်မည်</button>
     </div>
 </div>
 
+<!-- 🎮 Admin Content -->
 <div id="admin-content">
     <div class="admin-header">JOHNNY ADMIN CONTROL</div>
     <div class="container">
         <div class="admin-card">
             <label>User UID (User Profile ကနေကူးလာပါ)</label>
-            <input type="text" id="target-uid" placeholder="UID ကို ဒီမှာ Paste လုပ်ပါ">
+            <input type="text" id="target-uid" placeholder="UID ကို ဒီမှာ Paste လုပ်ပါ" onkeydown="if(event.key==='Enter') checkUser()">
             <button class="btn btn-search" onclick="checkUser()">Check User</button>
 
             <div id="user-info" class="user-preview">
@@ -76,9 +86,8 @@
                 <div id="display-balance" style="font-weight: bold; color: #28a745; font-size: 18px; margin-top: 5px;">လက်ရှိ Balance: 0 Ks</div>
                 
                 <div style="margin-top: 20px;">
-                    <label style="color: #fff; border-bottom: 1px solid #00AEEF;">ဝယ်ယူမှုမှတ်တမ်းများ</label>
-                    <div id="purchase-list">
-                        </div>
+                    <label style="color: #fff; border-bottom: 1px solid #00AEEF; display:block; margin-bottom:10px;">ဝယ်ယူမှုမှတ်တမ်းများ</label>
+                    <div id="purchase-list"></div>
                 </div>
             </div>
 
@@ -87,8 +96,7 @@
                 <input type="number" id="amount" placeholder="ဥပမာ - 5000">
                 <button class="btn btn-add" id="add-btn" onclick="updateBalance()">Balance ထည့်မည်</button>
 
-                <label style="margin-top: 15px;">User ဆီ စာပို့ရန်</label>
-                <textarea id="admin-msg" placeholder="ဥပမာ - ပိုက်ဆံ ၅၀၀၀ ဖြည့်သွင်းမှု အောင်မြင်ပါသည်"></textarea>
+                <label style="margin-top: 15px;">User ဆီ စာပို့ရန်</label>                <textarea id="admin-msg" placeholder="ဥပမာ - ပိုက်ဆံ ၅၀၀၀ ဖြည့်သွင်းမှု အောင်မြင်ပါသည်" rows="3"></textarea>
                 <button class="btn btn-msg" onclick="sendMessage()">စာပို့မည်</button>
             </div>
         </div>
@@ -121,12 +129,14 @@
     const ADMIN_EMAIL = "playeraung449@gmail.com";
     const ADMIN_PIN = "2009"; 
 
+    // 🔐 Admin Authentication Check
     onAuthStateChanged(auth, (user) => {
         if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) { 
             window.location.href = "login.html"; 
         }
     });
 
+    // 🔐 PIN Verification
     window.verifyPin = function() {
         const input = document.getElementById('pin-input').value;
         if (input === ADMIN_PIN) {
@@ -135,10 +145,9 @@
         } else {
             alert("PIN မှားယွင်းနေပါသည်။");
             document.getElementById('pin-input').value = "";
-        }
-    }
+        }    }
 
-    // User စစ်ဆေးပြီး အော်ဒါမှတ်တမ်းပါ ဆွဲထုတ်မယ့်အပိုင်း
+    // 👤 User Lookup Function
     window.checkUser = async function() {
         const uid = document.getElementById('target-uid').value.trim();
         if(!uid) return alert("UID အရင်ထည့်ပါ");
@@ -152,86 +161,127 @@
                 document.getElementById('user-info').style.display = "block";
                 document.getElementById('action-section').style.display = "block";
 
-                // အော်ဒါမှတ်တမ်းကို ဆွဲထုတ်မယ်
+                // Load purchase history
                 loadUserPurchases(uid);
 
-            } else { alert("အကောင့်ရှာမတွေ့ပါ"); }
+            } else { 
+                alert("အကောင့်ရှာမတွေ့ပါ"); 
+                document.getElementById('user-info').style.display = "none";
+                document.getElementById('action-section').style.display = "none";
+            }
         } catch (e) { alert("Error: " + e.message); }
     }
 
-    // ဝယ်ယူမှုမှတ်တမ်းများကို ပြပေးမယ့် Function
+    // 📦 Load User Purchases with Status
     async function loadUserPurchases(uid) {
         const listDiv = document.getElementById('purchase-list');
-        listDiv.innerHTML = "Loading orders...";
+        listDiv.innerHTML = "<p style='text-align:center;color:#888;'>Loading orders...</p>";
         
         try {
             const q = query(collection(db, "users", uid, "purchases"), orderBy("time", "desc"));
             const querySnapshot = await getDocs(q);
             listDiv.innerHTML = "";
 
+            if(querySnapshot.empty) {
+                listDiv.innerHTML = "<p style='text-align:center;color:#888;'>📭 ဝယ်ယူမှုမှတ်တမ်း မရှိသေးပါ</p>";
+                return;
+            }
+
             querySnapshot.forEach((docSnap) => {
                 const order = docSnap.data();
                 const orderId = docSnap.id;
-                const isPending = order.status === "pending";
+                const status = order.status || "pending";
+
+                let statusText, statusClass;
+                if(status === "pending") {
+                    statusText = "⏳ ဆောင်ရွက်နေဆဲ";                    statusClass = "";
+                } else if(status === "success") {
+                    statusText = "✅ အောင်မြင်သည်";
+                    statusClass = "status-success";
+                } else if(status === "rejected") {
+                    statusText = "❌ လက်မခံပါ";
+                    statusClass = "status-rejected";
+                } else {
+                    statusText = status;
+                    statusClass = "";
+                }
 
                 const orderHtml = `
                     <div class="order-item">
                         <div class="order-info">
-                            <b>${order.gameName}</b> (${order.itemName})<br>
-                            ID: ${order.playerID}<br>
-                            Price: ${order.price} Ks<br>
-                            Status: <span id="status-${orderId}" class="${!isPending ? 'status-success' : ''}">${isPending ? 'ဆောင်ရွက်နေဆဲ' : 'အောင်မြင်သည်'}</span>
+                            <b>${order.gameName || "Unknown"}</b> (${order.itemName || "Unknown"})<br>
+                            ID: ${order.playerID || "-"}<br>
+                            Price: ${order.price || 0} Ks<br>
+                            Status: <span class="${statusClass}">${statusText}</span>
                         </div>
-                        ${isPending ? `<button class="btn-done" onclick="completeOrder('${uid}', '${orderId}')">Done လုပ်မည်</button>` : ''}
+                        ${status === "pending" ? `
+                            <button class="btn-done" onclick="completeOrder('${uid}', '${orderId}')">✅ Done လုပ်မည်</button>
+                            <button class="btn-reject" onclick="rejectOrder('${uid}', '${orderId}')">❌ လက်မခံဘူး</button>
+                        ` : ''}
                     </div>
                 `;
                 listDiv.innerHTML += orderHtml;
             });
 
-            if(listDiv.innerHTML === "") listDiv.innerHTML = "ဝယ်ယူမှုမရှိသေးပါ။";
-
-        } catch (e) { console.error(e); listDiv.innerHTML = "Orders ဆွဲယူရာတွင် မှားယွင်းနေပါသည်။"; }
+        } catch (e) { 
+            console.error(e); 
+            listDiv.innerHTML = "<p style='text-align:center;color:#dc3545;'>Orders ဆွဲယူရာတွင် မှားယွင်းနေပါသည်။</p>"; 
+        }
     }
 
-    // Status ကို success လို့ ပြောင်းပေးမယ့် Function
+    // ✅ Complete Order Function
     window.completeOrder = async function(uid, orderId) {
         if(confirm("ဒီအော်ဒါကို လုပ်ဆောင်ပြီးပြီလို့ သတ်မှတ်မလား Boss?")) {
             try {
                 const orderRef = doc(db, "users", uid, "purchases", orderId);
-                await updateDoc(orderRef, { status: "success" });
+                await updateDoc(orderRef, { 
+                    status: "success",
+                    completedAt: serverTimestamp()
+                });
+                
+                // Optional: Send success notification
+                await addDoc(collection(db, "users", uid, "notifications"), {
+                    text: "✅ ဝယ်ယူမှု အောင်မြင်ပါပြီ။ ပစ္စည်းကို ဂိမ်းထဲတွင် စစ်ဆေးနိုင်ပါပြီ။", 
+                    time: serverTimestamp(), 
+                    read: false,                    type: "admin_success"
+                });
+                
                 alert("အော်ဒါ အောင်မြင်ကြောင်း ပြောင်းလဲပြီးပါပြီ!");
-                checkUser(); // List ကို ပြန် update လုပ်ဖို့
+                checkUser();
             } catch (e) { alert("Error: " + e.message); }
         }
     }
-// ✅ completeOrder function အောက်မှာ ဒါလေးထပ်ထည့်ပေးပါ
-window.rejectOrder = async function(uid, orderId) {
-    if(confirm("ဒီအော်ဒါကို လက်မခံဘူးလို့ သတ်မှတ်မလား Boss?")) {
-        try {
-            const orderRef = doc(db, "users", uid, "purchases", orderId);
-            
-            // 1. Order status ကို rejected လို့ ပြောင်းမယ်
-            await updateDoc(orderRef, { 
-                status: "rejected",
-                rejectedAt: serverTimestamp() 
-            });
-            
-            // 2. User ဆီကို "လက်မခံပါဘူး" ဆိုတဲ့ စာပို့မယ် (history.html မှာပေါ်ဖို့)
-            await addDoc(collection(db, "users", uid, "notifications"), {
-                text: "❌ ဝယ်ယူမှုကို လက်မခံပါဘူး။ အကြောင်းအရင်းကို Admin ထံ ဆက်သွယ်မေးမြန်းနိုင်ပါတယ်။", 
-                time: serverTimestamp(), 
-                read: false,
-                type: "admin_reject"  // type အသစ်ထည့်ထားတာမို့ history.html မှာ ခွဲခြားပြနိုင်ပါတယ်
-            });
-            
-            alert("အော်ဒါကို လက်မခံကြောင်း ပြောင်းလဲပြီးပါပြီ!");
-            checkUser(); // List ကို ပြန် update လုပ်ဖို့
-            
-        } catch (e) { 
-            alert("Error: " + e.message); 
+
+    // ❌ REJECT Order Function - အသစ်ထည့်ထားတာ
+    window.rejectOrder = async function(uid, orderId) {
+        if(confirm("ဒီအော်ဒါကို လက်မခံဘူးလို့ သတ်မှတ်မလား Boss?")) {
+            try {
+                const orderRef = doc(db, "users", uid, "purchases", orderId);
+                
+                // 1. Order status ကို rejected လို့ ပြောင်းမယ်
+                await updateDoc(orderRef, { 
+                    status: "rejected",
+                    rejectedAt: serverTimestamp() 
+                });
+                
+                // 2. User ရဲ့ history.html မှာ ပေါ်ဖို့ notification ပို့မယ်
+                await addDoc(collection(db, "users", uid, "notifications"), {
+                    text: "❌ ဝယ်ယူမှုကို လက်မခံပါဘူး။ အကြောင်းအရင်းကို Admin ထံ ဆက်သွယ်မေးမြန်းနိုင်ပါတယ်။", 
+                    time: serverTimestamp(), 
+                    read: false,
+                    type: "admin_reject"
+                });
+                
+                alert("အော်ဒါကို လက်မခံကြောင်း ပြောင်းလဲပြီးပါပြီ!");
+                checkUser(); // List ကို ပြန် update လုပ်ဖို့
+                
+            } catch (e) { 
+                alert("Error: " + e.message); 
+            }
         }
     }
-}
+
+    // 💰 Update Balance Function
     window.updateBalance = async function() {
         const uid = document.getElementById('target-uid').value.trim();
         const amt = parseInt(document.getElementById('amount').value);
@@ -240,6 +290,14 @@ window.rejectOrder = async function(uid, orderId) {
         if(confirm(amt + " Ks ဖြည့်သွင်းမှာ သေချာလား?")) {
             try {
                 await updateDoc(doc(db, "users", uid), { balance: increment(amt) });
+                
+                // Notification for balance top-up
+                await addDoc(collection(db, "users", uid, "notifications"), {                    text: "💰 Balance " + amt + " Ks ဖြည့်သွင်းမှု အောင်မြင်ပါပြီ။", 
+                    time: serverTimestamp(), 
+                    read: false,
+                    type: "balance_topup"
+                });
+                
                 alert("ပိုက်ဆံဖြည့်ပြီးပါပြီ");
                 checkUser();
                 document.getElementById('amount').value = "";
@@ -247,6 +305,7 @@ window.rejectOrder = async function(uid, orderId) {
         }
     }
 
+    // 💬 Send Message to User Function
     window.sendMessage = async function() {
         const uid = document.getElementById('target-uid').value.trim();
         const msg = document.getElementById('admin-msg').value;
@@ -264,6 +323,7 @@ window.rejectOrder = async function(uid, orderId) {
         } catch (e) { alert("Error: " + e.message); }
     }
 
+    // 🚪 Logout Function
     window.logout = () => signOut(auth).then(() => window.location.href = "login.html");
 </script>
 
