@@ -15,39 +15,40 @@
             background: white; padding: 20px;
             display: flex; align-items: center; gap: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
         }
         .back-btn {
             text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold;
         }
         .header-title { font-size: 18px; font-weight: bold; color: #333; }
 
-        .msg-container { padding: 15px; }
+        .msg-container { padding: 15px; padding-bottom: 30px; }
         
         .msg-card {
             background: white; padding: 15px; border-radius: 15px;
             margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border-left: 5px solid #00A651;
-            animation: fadeIn 0.5s ease;
+            animation: fadeIn 0.3s ease;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ✅ Message Type Colors */
+        .msg-reject { border-left-color: #C62828; }
+        .msg-success { border-left-color: #2E7D32; }
+        .msg-topup { border-left-color: #0072BC; }
+        .msg-default { border-left-color: #00A651; }
+
         .msg-text { font-size: 15px; color: #333; line-height: 1.5; margin-bottom: 8px; }
         .msg-time { font-size: 11px; color: #999; text-align: right; display: block; }
 
         .no-msg {
-            text-align: center; color: white; margin-top: 50px; font-size: 16px;
+            text-align: center; color: white; margin-top: 60px; font-size: 15px; opacity: 0.95;
         }
-        
-        /* Loading Spinner */
-        .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid #00AEEF;
-            border-radius: 50%; width: 30px; height: 30px;
-            animation: spin 1s linear infinite; margin: 50px auto;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                /* Loading */
+        .loading { text-align: center; color: white; margin-top: 40px; }
     </style>
 </head>
 <body>
@@ -58,13 +59,13 @@
 </div>
 
 <div class="msg-container" id="msg-display">
-    <div class="loader" id="loader"></div>
+    <div class="loading">Loading messages... 🔍</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
@@ -84,38 +85,64 @@
             window.location.href = "login.html";
         } else {
             const display = document.getElementById('msg-display');
-            
-            // Admin ဆီက စာတွေကို အချိန်နဲ့တကွ စောင့်ကြည့်မယ်
             const msgRef = collection(db, "users", user.uid, "notifications");
             const q = query(msgRef, orderBy("time", "desc"));
 
-            onSnapshot(q, (snapshot) => {
-                display.innerHTML = ""; // Loader ကို ဖြုတ်ပြီး စာတွေ စပြမယ်
+            onSnapshot(q, async (snapshot) => {
+                display.innerHTML = "";
                 
                 if (snapshot.empty) {
-                    display.innerHTML = "<div class='no-msg'>မက်ဆေ့ခ်ျ မရှိသေးပါ</div>";
+                    display.innerHTML = "<div class='no-msg'>📭 အကြောင်းကြားစာ အသစ်မရှိသေးပါ</div>";
                     return;
                 }
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const date = data.time ? data.time.toDate() : new Date();
+                for (const docSnap of snapshot.docs) {                    const data = docSnap.data();
+                    const msgId = docSnap.id;
+                    
+                    // ✅ စာဖတ်လိုက်ရင် "read: true" လို့ မှတ်သားမယ်
+                    if (!data.read) {
+                        try {
+                            await updateDoc(doc(msgRef, msgId), { read: true });
+                        } catch (e) {
+                            console.warn("Read status update failed:", e.message);
+                        }
+                    }
+
+                    // 🕐 Time Format
+                    const date = data.time?.toDate?.() || new Date();
                     const timeStr = date.toLocaleString('en-GB', { 
                         day: 'numeric', month: 'short', 
-                        hour: '2-digit', minute: '2-digit', hour12: true 
+                        hour: '2-digit', minute: '2-digit'
                     });
 
+                    // 🎨 Message Type အလိုက် အရောင်/အိုင်ကွန် ခွဲခြား
+                    let typeClass = "msg-default";
+                    let icon = "🔔";
+                    
+                    if (data.type === "admin_reject") {
+                        typeClass = "msg-reject"; icon = "❌";
+                    } else if (data.type === "admin_success") {
+                        typeClass = "msg-success"; icon = "✅";
+                    } else if (data.type === "balance_topup") {
+                        typeClass = "msg-topup"; icon = "💰";
+                    } else if (data.type === "admin_msg") {
+                        typeClass = "msg-default"; icon = "💬";
+                    }
+
                     display.innerHTML += `
-                        <div class="msg-card">
-                            <div class="msg-text">${data.text}</div>
-                            <span class="msg-time">${timeStr}</span>
+                        <div class="msg-card ${typeClass}">
+                            <div class="msg-text">${icon} ${data.text}</div>
+                            <span class="msg-time">🕙 ${timeStr}</span>
                         </div>
                     `;
-                });
+                }
+            }, (error) => {
+                // ✅ Error Handling ထည့်ထား
+                console.error("Messages load error:", error);
+                display.innerHTML = "<div class='no-msg'>⚠️ မက်ဆေ့ခ်ျများ ဆွဲယူရာတွင် အဆင်မပြေဖြစ်နေပါသည်။</div>";
             });
         }
     });
 </script>
 
-</body>
-</html>
+</body></html>
