@@ -22,6 +22,15 @@
 
         .history-container { padding: 15px; padding-bottom: 30px; }
         
+        /* Section Title */
+        .section-title {
+            color: white; font-size: 15px; font-weight: bold;
+            margin: 20px 0 10px 5px; padding-bottom: 5px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* 📦 Purchase Card Style */
         .history-card {
             background: white; padding: 15px; border-radius: 15px;
             margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -31,22 +40,44 @@
         @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
         .game-name { font-size: 16px; font-weight: bold; color: #0072BC; margin-bottom: 5px; display: block; }
-        
         .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
         .label { color: #777; }
         .value { color: #333; font-weight: 600; }
 
+        /* ✅ Status Badge Styles - ၃ မျိုးလုံး */
         .status-badge {
-            display: inline-block; padding: 3px 12px; border-radius: 20px;
-            font-size: 11px; font-weight: bold; margin-top: 8px;
-            transition: 0.3s;
-        }
-        .st-pending { background: #FFF9C4; color: #F57F17; } /* ဆောင်ရွက်ဆဲ - ဝါရောင်သန်းသန်း */
-        .st-success { background: #E8F5E9; color: #2E7D32; } /* အောင်မြင် - အစိမ်း */
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; margin-top: 8px;        }
+        .st-pending { background: #FFF9C4; color: #F57F17; border: 1px solid #F57F17; } 
+        .st-success { background: #E8F5E9; color: #2E7D32; border: 1px solid #2E7D32; } 
+        .st-rejected { background: #FFEBEE; color: #C62828; border: 1px solid #C62828; }
 
         .date-text { font-size: 11px; color: #bbb; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; display: block; }
 
-        .no-data { text-align: center; color: white; margin-top: 60px; font-size: 14px; }
+        /* 🔔 Notification Card Style */
+        .notif-card {
+            background: rgba(255,255,255,0.95); padding: 12px 15px; border-radius: 12px;
+            margin-bottom: 10px; border-left: 4px solid #1C75BC;
+            animation: slideIn 0.3s ease-out;
+        }
+        .notif-text { font-size: 14px; color: #333; line-height: 1.4; }
+        .notif-time { font-size: 10px; color: #999; margin-top: 6px; }
+        
+        /* Notification Types Colors */
+        .notif-reject { border-left-color: #C62828; }
+        .notif-success { border-left-color: #2E7D32; }
+        .notif-msg { border-left-color: #6f42c1; }
+        .notif-topup { border-left-color: #0072BC; }
+
+        .no-data { text-align: center; color: white; margin-top: 60px; font-size: 14px; opacity: 0.9; }
+        .loading { text-align: center; color: white; margin-top: 30px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .info-row { font-size: 13px; }
+            .game-name { font-size: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -57,7 +88,7 @@
 </div>
 
 <div class="history-container" id="history-list">
-    <div style="text-align:center; color:white; margin-top:30px;">Loading...</div>
+    <div class="loading">Loading history... 🔍</div>
 </div>
 
 <script type="module">
@@ -65,8 +96,7 @@
     import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
     import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+    const firebaseConfig = {        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
         authDomain: "johnny-gaming-shop.firebaseapp.com",
         projectId: "johnny-gaming-shop",
         storageBucket: "johnny-gaming-shop.firebasestorage.app",
@@ -78,7 +108,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // အမြဲ Login ဖြစ်နေစေရန်
     setPersistence(auth, browserLocalPersistence);
 
     onAuthStateChanged(auth, (user) => {
@@ -87,82 +116,134 @@
         } else {
             const listArea = document.getElementById('history-list');
             
-            const historyRef = collection(db, "users", user.uid, "purchases");
-            const q = query(historyRef, orderBy("time", "desc"));
+            // ============================
+            // 📦 PURCHASES (ဝယ်ယူမှုများ)
+            // ============================
+            const purchasesRef = collection(db, "users", user.uid, "purchases");
+            const purchasesQuery = query(purchasesRef, orderBy("time", "desc"));
 
-            // Real-time listen လုပ်မယ် (Admin ဘက်က Status ပြောင်းရင် ချက်ချင်းပေါ်မယ်)
-            onSnapshot(q, (snapshot) => {
+            // ============================
+            // 🔔 NOTIFICATIONS (အကြောင်းကြားစာများ)
+            // ============================
+            const notifRef = collection(db, "users", user.uid, "notifications");
+            const notifQuery = query(notifRef, orderBy("time", "desc"));
+
+            let purchasesData = [];
+            let notificationsData = [];
+
+            // 🔁 နှစ်ခုလုံး ဒေတာရမှ ပြမယ်
+            function renderCombined() {
                 listArea.innerHTML = "";
-
-                if (snapshot.empty) {
-                    listArea.innerHTML = "<div class='no-data'>ဝယ်ယူထားသော မှတ်တမ်းမရှိသေးပါ Boss! 🛒</div>";
+                
+                // အကယ်၍ ဒေတာလုံးဝမရှိသေးရင်
+                if (purchasesData.length === 0 && notificationsData.length === 0) {
+                    listArea.innerHTML = "<div class='no-data'>📭 မှတ်တမ်းအသစ် မရှိသေးပါ Boss! 🛒</div>";
                     return;
                 }
-// history.html မှာ notification ပြတဲ့နေရာမှာ ဥပမာ:
-if (notif.type === "admin_reject") {
-    html += `<div class="notif-item reject">❌ ${notif.text}</div>`;
-} else if (notif.type === "admin_msg") {
-    html += `<div class="notif-item success">✅ ${notif.text}</div>`;
-}
 
-                snapshot.forEach((doc) => {
-                    const d = doc.data();
-                    
-                    // Date Format ကို ပိုပြီး ရှင်းအောင် လုပ်ထားတယ်
-                    let formattedDate = "Just now";
-                    if (d.time) {
-                        const dateObj = d.time.toDate();
-                        formattedDate = dateObj.toLocaleString('en-GB', { 
-                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-                        });
-                    }
+                // 📦 Purchases Section Title
+                if (purchasesData.length > 0) {
+                    listArea.innerHTML += `<div class="section-title">🛒 ဝယ်ယူမှုမှတ်တမ်းများ</div>`;
+                    purchasesData.forEach(item => {
+                        listArea.innerHTML += createPurchaseCard(item);                    });
+                }
 
-   // လက်ရှိရှိနေတဲ့ orderHtml ကို အောက်ပါအတိုင်း အစားထိုးပေးပါ
-const history.Html = `
-    <div class="order-item">
-        <div class="order-info">
-            <b>${order.gameName}</b> (${order.itemName})<br>
-            ID: ${order.playerID}<br>
-            Price: ${order.price} Ks<br>
-            Status: <span id="status-${orderId}" class="${order.status !== 'pending' ? 'status-success' : ''}">
-                ${order.status === 'pending' ? 'ဆောင်ရွက်နေဆဲ' : 
-                  order.status === 'success' ? '✅ အောင်မြင်သည်' : '❌ လက်မခံပါ'}
-            </span>
-        </div>
-        ${order.status === 'pending' ? `
-            <button class="btn-done" onclick="completeOrder('${uid}', '${orderId}')">✅ Done လုပ်မည်</button>
-            <button class="btn-reject" onclick="rejectOrder('${uid}', '${orderId}')">❌ လက်မခံဘူး</button>
-        ` : ''}
-    </div>
-`;
-                            <span class="game-name">${d.gameName || 'Game Topup'}</span>
-                            
-                            <div class="info-row">
-                                <span class="label">ဂိမ်း ID/Username:</span>
-                                <span class="value">${d.playerID || '-'}</span>
-                            </div>
-                            
-                            <div class="info-row">
-                                <span class="label">အမျိုးအစား:</span>
-                                <span class="value">${d.itemName || '-'}</span>
-                            </div>
+                // 🔔 Notifications Section Title
+                if (notificationsData.length > 0) {
+                    listArea.innerHTML += `<div class="section-title">🔔 အကြောင်းကြားစာများ</div>`;
+                    notificationsData.forEach(item => {
+                        listArea.innerHTML += createNotificationCard(item);
+                    });
+                }
+            }
 
-                            <div class="info-row">
-                                <span class="label">ကျသင့်ငွေ:</span>
-                                <span class="value">${d.price ? d.price.toLocaleString() : '0'} Ks</span>
-                            </div>
+            // 📦 Purchase Card HTML Generator
+            function createPurchaseCard(d) {
+                let formattedDate = "Just now";
+                if (d.time && typeof d.time.toDate === 'function') {
+                    const dateObj = d.time.toDate();
+                    formattedDate = dateObj.toLocaleString('en-GB', { 
+                        day: 'numeric', month: 'short', year: 'numeric', 
+                        hour: '2-digit', minute: '2-digit' 
+                    });
+                }
 
-                            <div class="status-badge ${statusClass}">${statusText}</div>
-                            
-                            <span class="date-text">🕙 ${formattedDate}</span>
+                let statusText, statusClass;
+                const status = d.status || "pending";
+                if (status === "pending") {
+                    statusText = "⏳ ဆောင်ရွက်နေဆဲ";
+                    statusClass = "st-pending";
+                } else if (status === "success") {
+                    statusText = "✅ အောင်မြင်သည်";
+                    statusClass = "st-success";
+                } else if (status === "rejected") {
+                    statusText = "❌ လက်မခံပါ";
+                    statusClass = "st-rejected";
+                } else {
+                    statusText = status;
+                    statusClass = "st-pending";
+                }
+
+                return `
+                    <div class="history-card">
+                        <span class="game-name">${d.gameName || 'Game Topup'}</span>
+                        <div class="info-row">
+                            <span class="label">ဂိမ်း ID/Username:</span>
+                            <span class="value">${d.playerID || '-'}</span>
                         </div>
-                    `;
-                });
+                        <div class="info-row">
+                            <span class="label">အမျိုးအစား:</span>
+                            <span class="value">${d.itemName || '-'}</span>
+                        </div>                        <div class="info-row">
+                            <span class="label">ကျသင့်ငွေ:</span>
+                            <span class="value">${d.price ? d.price.toLocaleString() : '0'} Ks</span>
+                        </div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="date-text">🕙 ${formattedDate}</span>
+                    </div>
+                `;
+            }
+
+            // 🔔 Notification Card HTML Generator
+            function createNotificationCard(n) {
+                let formattedTime = "";
+                if (n.time && typeof n.time.toDate === 'function') {
+                    formattedTime = n.time.toDate().toLocaleString('en-GB', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    });
+                }
+
+                let icon = "🔔", colorClass = "notif-msg";
+                if (n.type === "admin_reject") { icon = "❌"; colorClass = "notif-reject"; }
+                else if (n.type === "admin_success") { icon = "✅"; colorClass = "notif-success"; }
+                else if (n.type === "balance_topup") { icon = "💰"; colorClass = "notif-topup"; }
+                else if (n.type === "admin_msg") { icon = "💬"; colorClass = "notif-msg"; }
+
+                return `
+                    <div class="notif-card ${colorClass}">
+                        <div class="notif-text">${icon} ${n.text}</div>
+                        <div class="notif-time">🕙 ${formattedTime}</div>
+                    </div>
+                `;
+            }
+
+            // 🔄 Real-time Listen for Purchases
+            onSnapshot(purchasesQuery, (snapshot) => {
+                purchasesData = [];
+                snapshot.forEach((doc) => purchasesData.push({ id: doc.id, ...doc.data() }));
+                renderCombined();
             }, (error) => {
-                console.error("Snapshot Error: ", error);
-                listArea.innerHTML = "<div class='no-data'>ဒေတာဆွဲယူရာတွင် မှားယွင်းနေပါသည်။</div>";
+                console.error("Purchases Error: ", error);
             });
-        }
+
+            // 🔄 Real-time Listen for Notifications
+            onSnapshot(notifQuery, (snapshot) => {
+                notificationsData = [];
+                snapshot.forEach((doc) => notificationsData.push({ id: doc.id, ...doc.data() }));
+                renderCombined();
+            }, (error) => {
+                console.error("Notifications Error: ", error);
+            });        }
     });
 </script>
 
