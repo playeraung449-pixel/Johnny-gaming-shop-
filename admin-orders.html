@@ -360,7 +360,7 @@
     const PIN_KEY = "admin_pin_verified";
     const ATTEMPTS_KEY = "admin_pin_attempts";
 
-     // 🔐 PIN Verification System
+    // 🔐 PIN Verification System
     function checkPINSession() {
         const verified = localStorage.getItem(PIN_KEY);
         const attempts = localStorage.getItem(ATTEMPTS_KEY);
@@ -516,7 +516,8 @@
                 '<tr><td colspan="8" class="loading-row" style="color:#ff6b6b">❌ Error loading orders</td></tr>';
         }
     }
- // 📋 Render Orders Table
+
+    // 📋 Render Orders Table
     function renderOrders(orders) {
         const tbody = document.getElementById('orders-body');
         const countEl = document.getElementById('orders-count');
@@ -556,8 +557,7 @@
             `;
         }).join('');
     }
-
-    // 📊 Update Stats Dashboard
+// 📊 Update Stats Dashboard
     function updateStats() {
         const total = allOrders.length;
         const pending = allOrders.filter(o => o.status === 'pending').length;
@@ -708,7 +708,8 @@
         icon.className = type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
         setTimeout(() => { toast.classList.remove('show'); }, duration);
     }
-  // ⌨️ Keyboard Support
+
+    // ⌨️ Keyboard Support
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { if (document.getElementById('pin-overlay').style.display !== 'none') document.getElementById('pin-input').blur(); else closeModal(); }
         if (e.key === 'Enter' && document.getElementById('search-input') === document.activeElement) applyFilters();
