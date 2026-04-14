@@ -1,95 +1,262 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buy HOK Tokens - So Gaming Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>👑 Honor of Kings - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #fdfdfd; color: #333; }
-        .header { background: linear-gradient(90deg, #fdbb2d, #22c1c3); padding: 20px; color: white; display: flex; align-items: center; gap: 15px; }
-        .back-btn { text-decoration: none; color: white; font-size: 24px; font-weight: bold; }
-        .container { padding: 20px; }
-        .hok-banner { background: #1c1c1c; border-radius: 15px; padding: 15px; color: #fdbb2d; text-align: center; margin-bottom: 20px; font-weight: bold; border: 1px solid #fdbb2d; }
-        
-        .input-group { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; }
-        
-        .tokens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .token-card { background: white; padding: 15px; border-radius: 12px; border: 2px solid #eee; cursor: pointer; text-align: center; transition: 0.2s; }
-        .token-card.selected { border-color: #fdbb2d; background: #fffdf0; transform: translateY(-3px); }
-        .token-amount { display: block; font-weight: bold; color: #333; font-size: 15px; margin-bottom: 5px; }
-        .price { font-size: 13px; color: #e67e22; font-weight: bold; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
 
-        .buy-btn { width: 100%; background: #00A651; color: white; border: none; padding: 16px; border-radius: 30px; font-size: 18px; font-weight: bold; margin-top: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,166,81,0.3); }
-        .buy-btn:disabled { background: #ccc; }
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #fdbb2d, #e67e22);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #f39c12; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #1a1a2e; font-size: 24px; display: flex; align-items: center; font-weight: bold; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+
+        /* 👑 HOK Banner */
+        .hok-banner {
+            background: linear-gradient(135deg, #fdbb2d 0%, #e67e22 100%);
+            border-radius: 20px; padding: 20px; color: #1a1a2e; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 8px 25px rgba(253,187,45,0.4);
+            position: relative; overflow: hidden; font-weight: 700;
+        }
+        .hok-banner::before {
+            content: '👑'; position: absolute; font-size: 70px; opacity: 0.15;
+            top: -15px; right: -10px; animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .hok-banner h2 { margin: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .hok-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.95; }
+
+        /* 📦 Input Group */
+        .input-group {
+            background: #16213e; padding: 18px; border-radius: 16px;
+            margin-bottom: 20px; border: 1px solid #2a2a4a;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .input-label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #fdbb2d; }
+                .input-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+        .hok-input {
+            width: 100%; padding: 12px; border: 1px solid #2a2a4a;
+            background: #1a1a2e; color: white; border-radius: 10px; font-size: 15px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .hok-input:focus { border-color: #fdbb2d; box-shadow: 0 0 0 3px rgba(253,187,45,0.2); }
+        .hok-input::placeholder { color: rgba(255,255,255,0.5); }
+        .hok-input.valid { border-color: #28a745; }
+        .hok-input.invalid { border-color: #dc3545; }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #fdbb2d, #e67e22); color: #1a1a2e;
+            border: none; padding: 12px 16px; border-radius: 10px; font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .check-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(253,187,45,0.4); }
+        .check-btn:disabled { background: #555; cursor: not-allowed; color: #888; }
+        .check-btn.checking::after {
+            content: ''; width: 14px; height: 14px; border: 2px solid rgba(26,26,46,0.3);
+            border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .copy-btn {
+            background: rgba(253,187,45,0.2); color: #fdbb2d; border: none;
+            padding: 12px; border-radius: 10px; font-size: 13px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #fdbb2d; color: #1a1a2e; }
+        .copy-btn.copied { background: #28a745; color: white; }
+        
+        .input-hint { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.5; }
+        .input-hint b { color: #fdbb2d; }
+        
+        /* ✅/❌ Status Indicator */
+        .status-badge {
+            display: none; align-items: center; gap: 6px; padding: 8px 12px;
+            border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .status-badge.show { display: flex; }
+        .status-valid { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-invalid { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 📦 Package List */
+        .section-label { font-weight: 600; margin: 25px 0 12px; display: block; color: #fdbb2d; font-size: 15px; }
+        .tokens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }        
+        .token-card {
+            background: #16213e; padding: 16px; border-radius: 14px;
+            border: 2px solid #2a2a4a; cursor: pointer; text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); transition: all 0.25s;
+        }
+        .token-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(253,187,45,0.3); }
+        .token-card.selected { 
+            border-color: #fdbb2d; background: #1a1a3e; 
+            box-shadow: 0 0 0 3px rgba(253,187,45,0.2);
+        }
+        
+        .token-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+        .token-amount { font-weight: 700; font-size: 15px; color: white; display: block; margin-bottom: 4px; }
+        .token-price { font-size: 13px; color: #fdbb2d; font-weight: 600; }
+        .token-badge {
+            background: linear-gradient(135deg, #fdbb2d, #e67e22); color: #1a1a2e;
+            padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;
+            margin-top: 8px; display: inline-block;
+        }
+
+        /* 🔘 Buy Button */
+        .buy-btn {
+            width: 100%; background: linear-gradient(135deg, #00A651, #00c853);
+            color: white; border: none; padding: 16px; border-radius: 30px;
+            font-size: 17px; font-weight: 600; margin-top: 30px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,166,81,0.4); transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,166,81,0.5); }
+        .buy-btn:active:not(:disabled) { transform: translateY(1px); }
+        .buy-btn:disabled { 
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7;
+        }
+        .buy-btn.loading { pointer-events: none; }
+        .buy-btn.loading::after {
+            content: ''; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* ⚠️ Warning Box */
+        .warning-box {
+            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
+            padding: 12px 15px; border-radius: 0 10px 10px 0; margin: 20px 0;
+            font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5;
+        }
+        .warning-box i { margin-right: 6px; color: #FFC107; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {            .container { padding: 15px; }
+            .hok-banner { padding: 16px; }
+            .tokens-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .token-card { padding: 14px; }
+            .input-wrapper { flex-direction: column; align-items: stretch; }
+            .check-btn, .copy-btn { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
+<!-- 🎮 Header -->
 <div class="header">
-    <a href="index.html" class="back-btn">‹</a>
-    <div style="font-weight: bold;">Honor of Kings Tokens</div>
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">👑 Honor of Kings</div>
 </div>
 
 <div class="container">
+    <!-- 👑 Banner -->
     <div class="hok-banner">
-        🔥 HOK Official Tokens Recharge 🔥
+        <h2><i class="fas fa-crown"></i> HOK Tokens</h2>
+        <p>မိတ်ဆွေရဲ့ Honor of Kings အကောင့်ထဲကို ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရောက်ရှိစေရန် 🚀</p>
     </div>
 
+    <!-- ⚠️ Warning -->
+    <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <b>သတိပြုရန်:</b> Player ID (UID) ကို တိကျစွာ ရိုက်ထည့်ပါ။ 
+        မှားယွင်းပါက Tokens ပြန်လည်ပို့ဆောင်ပေးနိုင်မည် မဟုတ်ပါ။
+    </div>
+
+    <!-- 👤 Player ID Input + Check -->
     <div class="input-group">
-        <label>Player ID (UID)</label>
-        <input type="number" id="player-id" placeholder="HOK Player ID ကို ရိုက်ထည့်ပါ">
+        <label class="input-label">🆔 Honor of Kings Player ID (UID)</label>
+        <div class="input-wrapper">
+            <input type="number" id="player-id" class="hok-input" placeholder="Player ID ရိုက်ထည့်ပါ (ဥပမာ: 1234567890)" autocomplete="off">
+            <button class="check-btn" id="checkBtn" onclick="checkHOKID()">
+                <i class="fas fa-search"></i> စစ်ဆေးမည်
+            </button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="copy-btn" onclick="copyPlayerID()">📋 Copy</button>
+        </div>
+        <p class="input-hint">
+            * <b>Format:</b> 9-12 digit numeric ID only (ဂဏန်းသာ)<br>
+            * ✅ "စစ်ဆေးမည်" ကို နှိပ်ပြီး ID ပုံစံမှန်/မှား အရင်စစ်ပါ
+        </p>
+        <!-- Status Badge -->
+        <div class="status-badge" id="status-badge">
+            <span id="status-icon"></span>            <span id="status-text"></span>
+        </div>
     </div>
 
-    <label style="font-weight: bold; margin-bottom: 10px; display: block;">Tokens ပမာဏ ရွေးချယ်ပါ</label>
+    <!-- 📦 Token Package Selection -->
+    <label class="section-label">📦 Token Package ရွေးချယ်ပါ</label>
     <div class="tokens-grid">
         <div class="token-card" onclick="selectToken(this, '80+8 Tokens', 2800)">
-            <span class="token-amount">🪙 88 Tokens</span>
-            <span class="price">2,800 K</span>
+            <span class="token-icon">🪙</span>
+            <span class="token-amount">88 Tokens</span>
+            <span class="token-price">2,800 Ks</span>
+            <span class="token-badge">Starter</span>
         </div>
         <div class="token-card" onclick="selectToken(this, '240+24 Tokens', 8200)">
-            <span class="token-amount">🪙 264 Tokens</span>
-            <span class="price">8,200 K</span>
+            <span class="token-icon">🪙</span>
+            <span class="token-amount">264 Tokens</span>
+            <span class="token-price">8,200 Ks</span>
+            <span class="token-badge">Popular</span>
         </div>
         <div class="token-card" onclick="selectToken(this, '400+40 Tokens', 13500)">
-            <span class="token-amount">🪙 440 Tokens</span>
-            <span class="price">13,500 K</span>
+            <span class="token-icon">🪙</span>
+            <span class="token-amount">440 Tokens</span>
+            <span class="token-price">13,500 Ks</span>
+            <span class="token-badge">Value</span>
         </div>
         <div class="token-card" onclick="selectToken(this, '800+80 Tokens', 26500)">
-            <span class="token-amount">🪙 880 Tokens</span>
-            <span class="price">26,500 K</span>
+            <span class="token-icon">🪙</span>
+            <span class="token-amount">880 Tokens</span>
+            <span class="token-price">26,500 Ks</span>
+            <span class="token-badge">Best</span>
         </div>
     </div>
 
-    <button class="buy-btn" id="buyBtn" onclick="processHokPurchase()">ဝယ်ယူမည်</button>
+    <!-- 🔘 Buy Button -->
+    <button class="buy-btn" id="buyBtn" onclick="processHokPurchase()">
+        <i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်
+    </button>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
-    // ... အပေါ်က import စာကြောင်းတွေ ...
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
-  authDomain: "johnny-gaming-shop.firebaseapp.com",
-  projectId: "johnny-gaming-shop",
-  storageBucket: "johnny-gaming-shop.firebasestorage.app",
-  messagingSenderId: "833081291484",
-  appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19",
-  measurementId: "G-ECKGE175LZ"
-};
-
-// ... အောက်က Firebase initialize လုပ်တဲ့ ကုဒ်တွေ ...
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    setPersistence(auth, browserLocalPersistence);
 
     let selectedItemName = "";
     let selectedPrice = 0;
+    let currentUser = null;
+    let isIDValid = false;
 
+    // 📦 Token Selection
     window.selectToken = (el, name, price) => {
         document.querySelectorAll('.token-card').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
@@ -97,69 +264,233 @@ const firebaseConfig = {
         selectedPrice = price;
     };
 
-    async function sendToAdmin(details) {
-        const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
-        const chat_id = "6427719618";
-        const message = `
-👑 **SO GAMING SHOP - HOK ORDER**
-━━━━━━━━━━━━━━━━━━
-🎮 **ဂိမ်း:** Honor of Kings
-🆔 **Player ID:** ${details.playerID}
-🪙 **Tokens:** ${details.itemName}
-💰 **ကျသင့်ငွေ:** ${details.price} Ks
-📧 **ဝယ်သူ:** ${details.userEmail}
-━━━━━━━━━━━━━━━━━━
-သားကြီး... HOK Tokens အမြန်ဖြည့်ပေးလိုက်တော့! 🚀`;
+    // 📋 Copy Player ID
+    window.copyPlayerID = async () => {
+        const input = document.getElementById('player-id');
+        const btn = document.querySelector('.copy-btn');
+        const id = input.value.trim();
+        
+        if (!id) { input.focus(); return; }
+        
+        try {
+            await navigator.clipboard.writeText(id);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) { alert("Copy မရပါ။ ကိုယ်တိုင် ကူးယူပါ။"); }
+    };
 
-        const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-        try { await fetch(url); } catch (e) { console.error(e); }
+    // 🔍 Validate HOK Player ID Format
+    function isValidHOKFormat(id) {
+        // Honor of Kings IDs are typically 9-12 digit numbers
+        const regex = /^\d{9,12}$/;
+        return regex.test(id);
     }
 
-    window.processHokPurchase = async () => {
-        const user = auth.currentUser;
-        if(!user) return alert("Login အရင်ဝင်ပါ");
+    // 🌐 Check HOK Player ID (Format Validation)
+    async function checkHOKID() {
+        const input = document.getElementById('player-id');
+        const checkBtn = document.getElementById('checkBtn');
+        const badge = document.getElementById('status-badge');        
+        const playerID = input.value.trim();
         
-        const pid = document.getElementById('player-id').value;
-        if(!pid) return alert("Player ID ရိုက်ပါ");
-        if(selectedPrice === 0) return alert("ဝယ်ယူမယ့် ပမာဏ ရွေးပါ");
+        // Clear previous state
+        input.classList.remove('valid', 'invalid');
+        badge.classList.remove('show', 'status-valid', 'status-invalid');
+        isIDValid = false;
 
-        const btn = document.getElementById('buyBtn');
-        btn.disabled = true;
-
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        
-        if((userSnap.data().balance || 0) < selectedPrice) {
-            alert("လက်ကျန်ငွေ မလောက်ပါဘူး");
-            btn.disabled = false;
+        if (!playerID) {
+            showStatus('❌', 'Player ID ရိုက်ထည့်ပါ', 'invalid');
+            input.focus();
             return;
         }
 
-        await updateDoc(userRef, {
-            balance: increment(-selectedPrice),
-            total_spent: increment(selectedPrice),
-            spinCount: increment(1)
-        });
+        if (!isValidHOKFormat(playerID)) {
+            showStatus('❌', 'ID ပုံစံမှားနေပါသည် (ဂဏန်း 9-12 လုံး)', 'invalid');
+            input.classList.add('invalid');
+            return;
+        }
 
-        await addDoc(collection(db, "users", user.uid, "purchases"), {
-            gameName: "Honor of Kings",
-            playerID: pid,
-            itemName: selectedItemName,
-            price: selectedPrice,
-            status: "pending",
-            time: serverTimestamp()
-        });
+        // 🔄 Loading state
+        checkBtn.disabled = true;
+        checkBtn.classList.add('checking');
+        checkBtn.innerHTML = '';
 
-        await sendToAdmin({
-            playerID: pid,
-            itemName: selectedItemName,
-            price: selectedPrice,
-            userEmail: user.email
-        });
+        try {
+            // ✅ Format is valid - HOK doesn't have public API for ID lookup
+            isIDValid = true;
+            showStatus('✅', 'ID ပုံစံမှန်ကန်ပါသည် ✓', 'valid');
+            input.classList.add('valid');
+            
+        } catch (error) {
+            console.warn("HOK Check Error:", error);
+            showStatus('⚠️', 'Format မှန်ကန်ပါသည်', 'valid');
+            input.classList.add('valid');
+            isIDValid = true;
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.classList.remove('checking');
+            checkBtn.innerHTML = '<i class="fas fa-search"></i> စစ်ဆေးမည်';
+        }
+    }
 
-        alert("ဝယ်ယူမှုအောင်မြင်ပါသည်။ Admin ဆီ အမှာစာရောက်သွားပါပြီ။");
-        window.location.href = "history.html";
+    // 🎨 Show Status Badge
+    function showStatus(icon, text, type) {
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        statusIcon.textContent = icon;        statusText.textContent = text;
+        badge.className = `status-badge show status-${type}`;
+    }
+
+    // 🤖 Send to Telegram Admin (WITH UID)
+    async function sendToAdmin(details) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+        
+        const message = `
+👑 *HONOR OF KINGS TOKENS ORDER*
+━━━━━━━━━━━━━━━━━━
+📊 *ဝန်ဆောင်မှု:* Honor of Kings Tokens
+🆔 *Player ID:* ${details.playerID}
+👤 *User UID:* ${details.uid}
+📧 *Buyer Email:* ${details.email}
+🪙 *Package:* ${details.item}
+💰 *Price:* ${details.price.toLocaleString()} Ks
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ ချက်ချင်း စစ်ဆေးပြီး Tokens ဖြည့်ပေးပါရန် 🚀
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Telegram API Error:", e); }
+    }
+
+    // 🛒 Purchase Process
+    window.processHokPurchase = async () => {
+        const btn = document.getElementById('buyBtn');
+        const playerID = document.getElementById('player-id').value.trim();
+
+        // ✅ Validation
+        if (!currentUser) { alert("ကျေးဇူးပြု၍ Login ဝင်ပါ။"); return; }
+        if (!playerID) { alert("❌ Honor of Kings Player ID ကို ရိုက်ထည့်ပါ။"); return; }
+        if (!isValidHOKFormat(playerID)) {
+            alert("❌ Player ID ပုံစံမှားနေပါသည်။\n(ဂဏန်း 9-12 လုံးသာ ဖြစ်ရမည်)");
+            return;
+        }
+        if (selectedPrice === 0) { alert("❌ Token Package ကို အရင်ရွေးချယ်ပါ။"); return; }
+        // ⚠️ Warning if not checked
+        if (!isIDValid) {
+            const confirmSkip = confirm(`⚠️ Player ID ကို စစ်ဆေးထားခြင်း မရှိသေးပါ။
+
+🆔 ရိုက်ထည့်ထားသော ID: ${playerID}
+
+မှားယွင်းပါက Tokens ပြန်မရနိုင်ပါ။
+ဆက်လက်ဝယ်ယူမလား?`);
+            if (!confirmSkip) return;
+        }
+
+        // 🔒 Confirm Dialog with Spin Bonus
+        const confirmMsg = `👑 Honor of Kings Tokens ဝယ်ယူမည်
+
+🆔 လက်ခံမည့် Player ID: ${playerID}
+📦 Package: ${selectedItemName}
+💰 ဈေးနှုန်း: ${selectedPrice.toLocaleString()} Ks
+🎰 ဝယ်ယူမှုအောင်မြင်ပါက: Spin 1 ကြိမ် အခမဲ့ ရရှိမည်
+
+✅ အတည်ပြုဝယ်ယူမလား?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        // 🔄 Loading State
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '';
+
+        try {
+            const userRef = doc(db, "users", currentUser.uid);
+            const userSnap = await getDoc(userRef);
+            
+            if (!userSnap.exists()) throw new Error("User data not found");
+            
+            const balance = userSnap.data().balance || 0;
+            if (balance < selectedPrice) {
+                throw new Error(`လက်ကျန်ငွေ မလုံလောက်ပါ။ လိုအပ်ငွေ: ${(selectedPrice - balance).toLocaleString()} Ks`);
+            }
+
+            // 💰 Deduct Balance + Update Stats + 🎁 Free Spin
+            await updateDoc(userRef, {
+                balance: increment(-selectedPrice),
+                total_spent: increment(selectedPrice),
+                spinCount: increment(1)  // ✅ ဝယ်တိုင်း Spin 1 ကြိမ် အခမဲ့! 🎰
+            });
+
+  // 📝 Save Purchase Record (with UID)
+            await addDoc(collection(db, "users", currentUser.uid, "purchases"), {
+                gameName: "Honor of Kings",
+                player: playerID,
+                item: selectedItemName,
+                price: selectedPrice,
+                status: "pending",
+                time: serverTimestamp(),
+                buyerUid: currentUser.uid,  // ✅ UID သိမ်းထား
+                buyerEmail: currentUser.email
+            });
+
+                        // 🤖 Notify Admin via Telegram (WITH UID)
+            await sendToAdmin({
+                playerID: playerID,
+                uid: currentUser.uid,  // ✅ UID ပါထည့်
+                email: currentUser.email,
+                item: selectedItemName,
+                price: selectedPrice
+            });
+
+            // ✅ Success with Spin Notification
+            alert("🎉 ဝယ်ယူမှု အောင်မြင်ပါပြီ!\n\n🎰 ဂုဏ်ပြုအနေဖြင့် Lucky Spin 1 ကြိမ် အခမဲ့ ရရှိပါပြီ!\n\nAdmin မှ ၅-၁၅ မိနစ်အတွင်း Tokens ကို ဖြည့်ဆည်းပေးပါလိမ့်မယ်။\n\nကျေးဇူးတင်ပါတယ်။ 🙏");
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            let msg = "❌ အဆင်မပြေဖြစ်နေပါသည်။";
+            if (error.message.includes("လက်ကျန်")) msg = error.message;
+            else if (error.message.includes("network")) msg = "📶 အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ။";
+            alert(msg + "\n\nပြဿနာရှိပါက Admin ထံ ဆက်သွယ်ပါ။");
+        } finally {
+            // 🔁 Reset Button
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်';
+        }
     };
+
+    // 🔐 Auth Check
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        if (!user) {
+            setTimeout(() => { if (!auth.currentUser) window.location.href = "login.html"; }, 1000);
+        }
+    });
+
+    // ⌨️ Enter Key Support
+    document.getElementById('player-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (!isIDValid) checkHOKID();
+            else if (selectedPrice > 0) processHokPurchase();
+        }
+    });
 </script>
+
 </body>
 </html>
