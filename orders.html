@@ -1,70 +1,221 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders - Johnny Gaming Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📦 အော်ဒါများ - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
-            min-height: 100vh;
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            min-height: 100vh; color: #fff; padding-bottom: 20px;
         }
+
+        /* 🎮 Header */
         .header {
-            background: white; padding: 20px;
-            display: flex; align-items: center; gap: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #00AEEF; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
-        .header-title { font-size: 18px; font-weight: bold; color: #333; }
+        .back-btn { text-decoration: none; color: #00AEEF; font-size: 24px; font-weight: bold; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .refresh-btn { margin-left: auto; background: none; border: none; color: #00AEEF; font-size: 18px; cursor: pointer; }
 
+        /* 📦 Orders Container */
         .orders-container { padding: 15px; }
-        
+
+        /* 🗂️ Order Card */
         .order-card {
-            background: white; padding: 15px; border-radius: 15px;
-            margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; gap: 8px;
-            animation: fadeIn 0.4s ease;
+            background: rgba(255,255,255,0.08); border-radius: 16px;
+            margin-bottom: 15px; overflow: hidden;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            animation: slideUp 0.3s ease; transition: box-shadow 0.2s;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .order-card:hover, .order-card:active { box-shadow: 0 8px 25px rgba(0,174,239,0.2); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        .order-id { font-size: 12px; color: #888; }
-        
-        .status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-        .pending { background: #fff3cd; color: #856404; } /* စောင့်ဆိုင်းဆဲ */
-        .completed { background: #d4edda; color: #155724; } /* အောင်မြင်သည် */
-        .rejected { background: #f8d7da; color: #721c24; } /* ငြင်းပယ်ခံရသည် */
+        /* 📋 Card Header */
+        .card-header {
+            padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1);
+        }
+        .order-id { 
+            font-size: 12px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 6px; cursor: pointer;
+        }
+        .order-id:hover { color: #00AEEF; }
+        .copy-icon { font-size: 10px; opacity: 0.7; transition: opacity 0.2s; }
+        .order-id:hover .copy-icon { opacity: 1; }
+        /* 🎯 Status Badge */
+        .status-badge {
+            display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+        }
+        .status-pending { background: rgba(255,193,7,0.2); color: #FFC107; border: 1px solid #FFC107; }
+        .status-completed { background: rgba(40,167,69,0.2); color: #28A745; border: 1px solid #28A745; }
+        .status-rejected { background: rgba(220,53,69,0.2); color: #DC3545; border: 1px solid #DC3545; }
+        .status-processing { background: rgba(23,162,184,0.2); color: #17A2B8; border: 1px solid #17A2B8; }
 
-        .order-info { font-size: 14px; color: #333; margin-top: 5px; }
-        .order-time { font-size: 11px; color: #999; margin-top: 5px; }
-        .amount-display { font-size: 18px; font-weight: bold; color: #00A651; margin-top: 5px; }
+        /* 📄 Card Body */
+        .card-body { padding: 14px 16px; }
+        .order-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+        .order-row:last-child { margin-bottom: 0; }
+        .label { color: rgba(255,255,255,0.6); }
+        .value { font-weight: 600; color: #fff; text-align: right; }
+        .amount { font-size: 18px; color: #00AEEF; font-weight: bold; }
+        .payment-method { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; background: rgba(255,255,255,0.1); border-radius: 12px; font-size: 12px; }
 
-        .no-order { text-align: center; color: white; margin-top: 50px; font-size: 15px; }
-        
-        /* Image Preview Style */
-        .slip-img { 
-            width: 100%; height: 150px; object-fit: cover; 
-            border-radius: 10px; margin-top: 10px; border: 1px solid #ddd;
+        /* 🖼️ Screenshot Preview */
+        .screenshot-section { margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); }
+        .screenshot-label { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .slip-img {
+            width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px;
+            cursor: zoom-in; transition: transform 0.2s; border: 2px solid rgba(255,255,255,0.2);
+        }
+        .slip-img:hover { transform: scale(1.02); }
+        .slip-img.loading { opacity: 0.5; }
+        .slip-img.error { display: none; }
+        .img-error-msg { color: #FF6B6B; font-size: 12px; text-align: center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; }
+
+        /* ⏱️ Time & Actions */
+        .card-footer {
+            padding: 12px 16px; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; color: rgba(255,255,255,0.6);
+        }
+        .relative-time { cursor: help; }
+        .relative-time:hover { color: #00AEEF; }
+        .action-btn {
+            background: rgba(0,174,239,0.2); color: #00AEEF; border: none; padding: 6px 12px;
+            border-radius: 8px; font-size: 11px; cursor: pointer; transition: all 0.2s;
+        }
+        .action-btn:hover { background: rgba(0,174,239,0.4); }
+
+        /* 📊 Status Progress Bar */
+        .progress-track {
+            height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 0 16px 12px; overflow: hidden;
+        }
+        .progress-fill {            height: 100%; border-radius: 2px; transition: width 0.5s ease, background 0.3s;
+        }
+        .progress-pending { width: 33%; background: linear-gradient(90deg, #FFC107, #FF9800); }
+        .progress-processing { width: 66%; background: linear-gradient(90deg, #17A2B8, #00AEEF); }
+        .progress-completed { width: 100%; background: linear-gradient(90deg, #28A745, #20C997); }
+        .progress-rejected { width: 100%; background: linear-gradient(90deg, #DC3545, #FF6B6B); }
+
+        /* 🔍 Lightbox Modal */
+        #lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        #lightbox.active { display: flex; animation: fadeIn 0.2s; }
+        #lightbox-img { max-width: 100%; max-height: 90vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        #lightbox-close {
+            position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2);
+            color: white; border: none; width: 40px; height: 40px; border-radius: 50%;
+            font-size: 20px; cursor: pointer; transition: background 0.2s;
+        }
+        #lightbox-close:hover { background: rgba(255,255,255,0.4); }
+
+        /* ⏳ Skeleton Loading */
+        .skeleton { animation: pulse 1.5s infinite; background: rgba(255,255,255,0.1) !important; }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        .skeleton-card { height: 200px; border-radius: 16px; margin-bottom: 15px; }
+        .skeleton-header { height: 40px; border-radius: 12px 12px 0 0; }
+        .skeleton-body { padding: 14px 16px; }
+        .skeleton-line { height: 12px; border-radius: 4px; margin: 8px 0; background: rgba(255,255,255,0.1); }
+        .skeleton-line.short { width: 40%; }
+        .skeleton-line.long { width: 80%; }
+        .skeleton-img { width: 100%; height: 150px; border-radius: 12px; margin-top: 12px; }
+
+        /* 📭 Empty State */
+        .empty-state {
+            text-align: center; padding: 50px 20px; color: rgba(255,255,255,0.7);
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; opacity: 0.5; display: block; }
+        .empty-state p { font-size: 14px; line-height: 1.6; }
+        .empty-state .btn {
+            margin-top: 20px; background: #00AEEF; color: white; border: none;
+            padding: 10px 24px; border-radius: 10px; font-size: 14px; cursor: pointer;
+        }
+
+        /* 🔔 Status Change Notification */
+        .status-toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #28A745; color: white; padding: 12px 20px; border-radius: 12px;
+            font-size: 13px; font-weight: 500; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            z-index: 500; transition: transform 0.3s ease; display: flex; align-items: center; gap: 8px;        }
+        .status-toast.show { transform: translateX(-50%) translateY(0); }
+        .status-toast.error { background: #DC3545; }
+        .status-toast.warning { background: #FFC107; color: #333; }
+
+        /* 🔄 Pull to Refresh Indicator */
+        #refresh-indicator {
+            text-align: center; padding: 10px; color: #00AEEF; font-size: 13px;
+            display: none; animation: bounce 0.5s ease;
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* 📱 Responsive */
+        @media (max-width: 400px) {
+            .order-row { font-size: 12px; }
+            .amount { font-size: 16px; }
+            .card-header, .card-body, .card-footer { padding: 12px 14px; }
         }
     </style>
 </head>
 <body>
 
+<!-- 🔄 Refresh Indicator -->
+<div id="refresh-indicator"><i class="fas fa-sync-alt fa-spin"></i> Refreshing...</div>
+
+<!-- 🎮 Header -->
 <div class="header">
-    <a href="index.html" class="back-btn">‹</a>
-    <div class="header-title">အော်ဒါမှတ်တမ်းများ</div>
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title"><i class="fas fa-box-open"></i> အော်ဒါများ</div>
+    <button class="refresh-btn" onclick="forceRefresh()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
 </div>
 
+<!-- 📦 Orders List -->
 <div class="orders-container" id="orders-list">
-    <div style="text-align:center; color:white; margin-top:30px;">Loading...</div>
+    <!-- Skeleton Loading -->
+    <div class="order-card skeleton">
+        <div class="card-header skeleton skeleton-header"></div>
+        <div class="progress-track"><div class="progress-fill progress-pending"></div></div>
+        <div class="card-body skeleton-body">
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-img"></div>
+        </div>
+    </div>
+    <div class="order-card skeleton">
+        <div class="card-header skeleton skeleton-header"></div>
+        <div class="progress-track"><div class="progress-fill progress-pending"></div></div>
+        <div class="card-body skeleton-body">
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line short"></div>            <div class="skeleton-img"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔍 Lightbox Modal -->
+<div id="lightbox" onclick="closeLightbox(event)">
+    <button id="lightbox-close" onclick="event.stopPropagation(); closeLightbox()"><i class="fas fa-times"></i></button>
+    <img id="lightbox-img" src="" alt="Preview">
+</div>
+
+<!-- 🔔 Status Change Toast -->
+<div class="status-toast" id="status-toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toast-msg">Order status updated!</span>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
@@ -79,61 +230,280 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    const ordersList = document.getElementById('orders-list');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const toast = document.getElementById('status-toast');
+    const toastMsg = document.getElementById('toast-msg');
+
+    let currentUser = null;
+    let previousStatuses = {}; // Track status changes
+
+    // 🔐 Auth Check
     onAuthStateChanged(auth, (user) => {
         if (!user) {
-            window.location.href = "login.html";
-        } else {
-            const listDiv = document.getElementById('orders-list');
-            
-            // အော်ဒါတွေကို အချိန်နဲ့တပြေးညီ စောင့်ကြည့်မယ်
-            const ordersRef = collection(db, "users", user.uid, "orders");
-            const q = query(ordersRef, orderBy("timestamp", "desc"));
+            setTimeout(() => { if (!auth.currentUser) window.location.href = "login.html"; }, 1000);
+            return;
+        }        currentUser = user;
+        loadOrders(user.uid);
+    });
 
-            onSnapshot(q, (snapshot) => {
-                listDiv.innerHTML = "";
+    // 📦 Load Orders with Real-time Listener
+    function loadOrders(uid) {
+        const ordersRef = collection(db, "users", uid, "orders");
+        const q = query(ordersRef, orderBy("timestamp", "desc"));
 
-                if (snapshot.empty) {
-                    listDiv.innerHTML = "<div class='no-order'>အော်ဒါမှတ်တမ်း မရှိသေးပါ</div>";
-                    return;
+        onSnapshot(q, (snapshot) => {
+            ordersList.innerHTML = "";
+
+            if (snapshot.empty) {
+                ordersList.innerHTML = `
+                    <div class="empty-state">
+                        <i>📦</i>
+                        <p>အော်ဒါမှတ်တမ်း မရှိသေးပါ</p>
+                        <p style="font-size:13px;opacity:0.8;margin-top:5px">ဂိမ်းပစ္စည်း ဝယ်ယူကြည့်ပါ 🎮</p>
+                        <button class="btn" onclick="window.location.href='index.html'">ဝယ်ယူရန်</button>
+                    </div>`;
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const orderId = docSnap.id;
+                const timestamp = data.timestamp?.toDate?.() || new Date();
+                
+                // Check for status change
+                if (previousStatuses[orderId] && previousStatuses[orderId] !== data.status) {
+                    showStatusToast(data.status, data.adminNote || '');
+                    playStatusSound(data.status);
                 }
+                previousStatuses[orderId] = data.status;
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const date = data.timestamp ? data.timestamp.toDate() : new Date();
-                    const timeStr = date.toLocaleString('en-GB', { 
-                        day: 'numeric', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', hour12: true 
-                    });
-
-                    // Status အရောင် သတ်မှတ်ခြင်း
-                    let statusClass = "pending";
-                    let statusText = "စောင့်ဆိုင်းဆဲ";
-                    
-                    if (data.status === "completed") {
-                        statusClass = "completed";
-                        statusText = "အောင်မြင်သည်";
-                    } else if (data.status === "rejected") {
-                        statusClass = "rejected";
-                        statusText = "ငြင်းပယ်ခံရသည်";
-                    }
-
-                    listDiv.innerHTML += `
-                        <div class="order-card">
-                            <div class="order-header">
-                                <span class="order-id">ID: ${doc.id.substring(0,8)}</span>
-                                <span class="status ${statusClass}">${statusText}</span>
-                            </div>
-                            <div class="order-info">
-                                <b>အမျိုးအစား:</b> ${data.type || "ငွေဖြည့်ခြင်း"}<br>
-                                ${data.amount ? `<div class="amount-display">+ ${data.amount.toLocaleString()} ကျပ်</div>` : 'ငွေပမာဏ စစ်ဆေးနေဆဲ...'}
-                            </div>
-                            ${data.screenshot ? `<img src="${data.screenshot}" class="slip-img">` : ''}
-                            <div class="order-time">📅 ${timeStr}</div>
-                        </div>
-                    `;
-                });
+                ordersList.innerHTML += createOrderCard(orderId, data, timestamp);
             });
+
+            // Attach event listeners for new elements
+            attachCardEvents();
+        }, (error) => {
+            console.error("Orders load error:", error);
+            ordersList.innerHTML = `
+                <div class="empty-state" style="color:#FF6B6B">
+                    <i>⚠️</i>
+                    <p>အော်ဒါများ ဆွဲယူရာတွင် အဆင်မပြေ</p>
+                    <button class="btn" onclick="location.reload()">ပြန်စမ်းမည်</button>
+                </div>`;
+        });
+    }
+    // 🎨 Create Order Card HTML
+    function createOrderCard(orderId, data, timestamp) {
+        // Status mapping
+        const statusMap = {
+            pending: { text: "စောင့်ဆိုင်းဆဲ", class: "pending", progress: "progress-pending", icon: "⏳" },
+            processing: { text: "ဆောင်ရွက်နေဆဲ", class: "processing", progress: "progress-processing", icon: "🔄" },
+            completed: { text: "အောင်မြင်သည်", class: "completed", progress: "progress-completed", icon: "✅" },
+            rejected: { text: "ငြင်းပယ်ခံရ", class: "rejected", progress: "progress-rejected", icon: "❌" }
+        };
+        const status = statusMap[data.status] || statusMap.pending;
+
+        // Time formatting
+        const relativeTime = formatRelativeTime(timestamp);
+        const fullTime = timestamp.toLocaleString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+
+        // Payment method icon
+        const paymentIcons = { kpay: '📱', wave: '🌊', bank: '🏦', cash: '💵' };
+        const paymentIcon = paymentIcons[data.paymentMethod?.toLowerCase()] || '💰';
+
+        // Screenshot handling
+        const screenshotHtml = data.screenshot ? `
+            <div class="screenshot-section">
+                <div class="screenshot-label"><i class="fas fa-image"></i> ငွေလွှဲပြေစာ</div>
+                <img src="${data.screenshot}" 
+                     class="slip-img" 
+                     alt="Payment proof"
+                     onclick="openLightbox('${data.screenshot}')"
+                     onerror="this.classList.add('error'); this.nextElementSibling.style.display='block'">
+                <div class="img-error-msg" style="display:none">ပုံဖော်မရပါ 🖼️</div>
+            </div>` : '';
+
+        // Admin note (if rejected)
+        const adminNoteHtml = data.status === 'rejected' && data.adminNote ? `
+            <div style="margin-top:10px;padding:10px;background:rgba(220,53,69,0.1);border-radius:8px;border-left:3px solid #DC3545">
+                <div style="font-size:11px;color:#DC3545;font-weight:600;margin-bottom:4px">❌ Admin အကြောင်းပြချက်</div>
+                <div style="font-size:12px;color:#fff">${data.adminNote}</div>
+            </div>` : '';
+
+        return `
+            <div class="order-card" data-order-id="${orderId}">
+                <div class="card-header">
+                    <span class="order-id" onclick="copyToClipboard('${orderId}', this)">
+                        <i class="fas fa-hashtag"></i> ${orderId.substring(0,10)}... 
+                        <i class="copy-icon fas fa-copy"></i>
+                    </span>
+                    <span class="status-badge status-${status.class}">                        ${status.icon} ${status.text}
+                    </span>
+                </div>
+                
+                <div class="progress-track">
+                    <div class="progress-fill ${status.progress}"></div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="order-row">
+                        <span class="label">အမျိုးအစား</span>
+                        <span class="value">${data.type || 'ငွေဖြည့်ခြင်း'}</span>
+                    </div>
+                    <div class="order-row">
+                        <span class="label">ပမာဏ</span>
+                        <span class="value amount" onclick="copyToClipboard('${data.amount || 0}', this)" style="cursor:pointer">
+                            + ${data.amount?.toLocaleString?.() || '0'} Ks <i class="fas fa-copy" style="font-size:10px;opacity:0.6"></i>
+                        </span>
+                    </div>
+                    ${data.paymentMethod ? `
+                    <div class="order-row">
+                        <span class="label">လွှဲနည်း</span>
+                        <span class="value"><span class="payment-method">${paymentIcon} ${data.paymentMethod}</span></span>
+                    </div>` : ''}
+                    ${data.referenceId ? `
+                    <div class="order-row">
+                        <span class="label">Reference</span>
+                        <span class="value" style="font-family:monospace;font-size:12px">${data.referenceId}</span>
+                    </div>` : ''}
+                    
+                    ${screenshotHtml}
+                    ${adminNoteHtml}
+                </div>
+                
+                <div class="card-footer">
+                    <span class="relative-time" title="${fullTime}">🕙 ${relativeTime}</span>
+                    <button class="action-btn" onclick="viewDetails('${orderId}')">
+                        <i class="fas fa-info-circle"></i> အသေးစိတ်
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ⏱️ Relative Time Formatter
+    function formatRelativeTime(date) {
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (seconds < 60) return 'အခုပဲ';
+        if (minutes < 60) return `${minutes} မိနစ်က`;
+        if (hours < 24) return `${hours} နာရီက`;
+        if (days < 7) return `${days} ရက်က`;
+        return date.toLocaleDateString('my-MM', { day: 'numeric', month: 'short' });
+    }
+
+// 🔍 Lightbox Functions
+    window.openLightbox = function(url) {
+        lightboxImg.src = url;
+        lightboxImg.classList.add('loading');
+        lightboxImg.onload = () => lightboxImg.classList.remove('loading');
+        lightboxImg.onerror = () => {
+            lightboxImg.classList.remove('loading');
+            showToast('ပုံဖော်မရပါ 🖼️', 'error');
+        };
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scroll
+    }
+
+    window.closeLightbox = function(event) {
+        if (event && event.target !== lightbox && event.target !== lightboxImg) return;
+        lightbox.classList.remove('active');
+        lightboxImg.src = '';
+        document.body.style.overflow = '';
+    }
+
+    // 📋 Copy to Clipboard
+    window.copyToClipboard = function(text, element) {
+        navigator.clipboard.writeText(text).then(() => {
+            const original = element.innerHTML;
+            element.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => element.innerHTML = original, 1500);
+            showToast('ကူးယူပြီးပါပြီ 📋', 'success', 1000);
+        }).catch(() => {
+            showToast('ကူးယူမရပါ', 'error');
+        });
+    }
+
+    // 🔔 Status Change Toast
+    function showStatusToast(status, note = '') {
+        const statusMap = {
+            completed: { msg: '✅ အော်ဒါ အောင်မြင်ပါပြီ!', type: 'success' },
+            rejected: { msg: '❌ အော်ဒါ ငြင်းပယ်ခံရပါပြီ', type: 'error' },
+            processing: { msg: '🔄 အော်ဒါ ဆောင်ရွက်နေပါပြီ', type: 'warning' }
+        };
+        const config = statusMap[status] || { msg: '📦 အော်ဒါ အခြေအနေ ပြောင်းလဲသွားပါပြီ', type: 'success' };
+        
+        toastMsg.innerHTML = `${config.msg}${note ? `<br><small style="opacity:0.9">${note}</small>` : ''}`;
+        toast.className = `status-toast ${config.type} show`;
+        
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // 🔊 Play Sound for Status Change
+    function playStatusSound(status) {
+        if (status === 'completed') {
+            new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3').play().catch(()=>{});
+        } else if (status === 'rejected') {
+            new Audio('https://assets.mixkit.co/sfx/preview/mixkit-error-buzzer-948.mp3').play().catch(()=>{});
         }
+    }
+
+    // 🔔 Generic Toast
+    function showToast(message, type = 'success', duration = 2000) {
+        toastMsg.innerText = message;
+        toast.className = `status-toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''} show`;
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // 📄 View Order Details (Placeholder)
+    window.viewDetails = function(orderId) {
+        showToast('အသေးစိတ်ကြည့်ရန် မကြာမီ ထည့်သွင်းပေးပါမည် 🔜', 'warning', 2500);
+        // Future: Open modal or navigate to order detail page
+    }
+
+    // 🔄 Attach Event Listeners
+    function attachCardEvents() {
+        // Image lazy loading optimization could be added here
+    }
+
+    // 🔄 Force Refresh
+    window.forceRefresh = function() {
+        const indicator = document.getElementById('refresh-indicator');
+        indicator.style.display = 'block';
+        setTimeout(() => {
+            indicator.style.display = 'none';
+            if (currentUser) loadOrders(currentUser.uid);
+            showToast('Refresh ပြီးပါပြီ 🔄', 'success', 1500);
+        }, 1000);
+    }
+
+    // 🔄 Pull to Refresh
+    let startY = 0;
+    document.addEventListener('touchstart', e => { startY = e.touches[0].pageY; }, { passive: true });
+    document.addEventListener('touchend', e => {
+        if (e.changedTouches[0].pageY - startY > 100 && window.scrollY === 0) {
+            forceRefresh();
+        }
+    }, { passive: true });
+
+    // ⌨️ Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'r' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); forceRefresh(); }
+    });
+
+    // 🧹 Cleanup on page hide
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) closeLightbox();
     });
 </script>
 
