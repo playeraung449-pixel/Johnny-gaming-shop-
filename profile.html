@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>👤 Profile - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #00AEEF; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; display: flex; align-items: center; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 20px; max-width: 500px; margin: auto; }
+
+        /* 👤 Profile Card */
+        .profile-card {
+            background: rgba(255,255,255,0.08); border-radius: 20px;
+            padding: 25px 20px; margin-bottom: 20px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 🖼️ Avatar Section */
+        .avatar-section { position: relative; display: inline-block; margin-bottom: 15px; }
+        .avatar {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; font-weight: bold; color: white;
+            margin: 0 auto 10px; position: relative;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .avatar-edit {
+            position: absolute; bottom: 5px; right: 5px;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #00AEEF; color: white; border: 3px solid #001f3f;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer; transition: all 0.2s;        }
+        .avatar-edit:hover { background: #0072BC; transform: scale(1.1); }
+        #avatar-input { display: none; }
+
+        /* ✏️ Editable Fields */
+        .profile-field { margin-bottom: 18px; text-align: left; }
+        .field-label {
+            display: block; font-size: 12px; color: rgba(255,255,255,0.6);
+            margin-bottom: 6px; font-weight: 500;
+        }
+        .field-input {
+            width: 100%; padding: 12px 14px; border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+            color: white; font-size: 14px; outline: none; transition: border-color 0.2s;
+        }
+        .field-input:focus { border-color: #00AEEF; background: rgba(255,255,255,0.15); }
+        .field-input:disabled {
+            background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);
+            cursor: not-allowed; border-color: rgba(255,255,255,0.1);
+        }
+        .field-input.readonly { position: relative; }
+        .field-input.readonly::after {
+            content: '🔒'; position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%); font-size: 12px; opacity: 0.5;
+        }
+
+        /* 🔗 Copy Button for UID/Email */
+        .copy-btn {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: rgba(0,174,239,0.2); color: #00AEEF; border: none;
+            padding: 5px 10px; border-radius: 6px; font-size: 11px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #00AEEF; color: white; }
+        .copy-btn.copied { background: #28a745; color: white; }
+
+        /* 💾 Action Buttons */
+        .action-buttons { display: flex; gap: 10px; margin-top: 25px; }
+        .btn {
+            flex: 1; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.25s; border: none;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #00A651, #00c853); color: white;
+            box-shadow: 0 4px 15px rgba(0,166,81,0.3);
+        }
+        .btn-save:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,166,81,0.4); }
+        .btn-save:disabled { background: #555; cursor: not-allowed; transform: none; }
+        .btn-cancel {            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+
+        /* 👨‍💼 Admin Account Section */
+        .admin-section {
+            background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3);
+            border-radius: 16px; padding: 20px; margin-top: 25px;
+        }
+        .admin-title {
+            font-size: 15px; font-weight: bold; color: #FFC107;
+            margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .admin-info { font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.6; }
+        .admin-info b { color: #fff; }
+        .admin-contact {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,136,204,0.2); color: #00AEEF;
+            padding: 8px 15px; border-radius: 10px; text-decoration: none;
+            font-size: 13px; font-weight: 500; margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .admin-contact:hover { background: rgba(0,136,204,0.4); }
+
+        /* 📊 Account Stats */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.08); border-radius: 12px;
+            padding: 15px 10px; text-align: center;
+        }
+        .stat-value { font-size: 18px; font-weight: bold; color: #00AEEF; display: block; }
+        .stat-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+        /* 🔔 Toast Notification */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: white; color: #333; padding: 12px 20px; border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;
+            display: flex; align-items: center; gap: 10px; max-width: 90%;
+            transition: transform 0.3s ease; border-left: 4px solid #00AEEF;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-left-color: #28a745; }
+        .toast.error { border-left-color: #dc3545; }
+        .toast.info { border-left-color: #17a2b8; }
+        .toast i { font-size: 18px; }
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .profile-card { padding: 20px 15px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .action-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">👤 Account Profile</div>
+</div>
+
+<div class="container">
+    <!-- 👤 Profile Card -->
+    <div class="profile-card">
+        <!-- 🖼️ Avatar -->
+        <div class="avatar-section">
+            <div class="avatar" id="avatar-display">U</div>
+            <label class="avatar-edit" for="avatar-input" title="Change Avatar">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="avatar-input" accept="image/*">
+        </div>
+
+        <!-- ✏️ Display Name (Editable) -->
+        <div class="profile-field">
+            <label class="field-label">👤 Display Name</label>
+            <input type="text" class="field-input" id="display-name" placeholder="Your name">
+        </div>
+
+        <!-- 📱 Phone Number (Editable) -->
+        <div class="profile-field">
+            <label class="field-label">📱 Phone Number</label>
+            <input type="tel" class="field-input" id="phone-number" placeholder="09XXXXXXXXX">
+        </div>
+
+        <!-- 🔐 UID (Read-only) -->
+        <div class="profile-field" style="position:relative">
+            <label class="field-label">🆔 User UID</label>
+            <input type="text" class="field-input readonly" id="user-uid" disabled>
+            <button class="copy-btn" onclick="copyField('user-uid')">Copy</button>
+        </div>
+
+        <!-- 📧 Email (Read-only) -->
+        <div class="profile-field" style="position:relative">            <label class="field-label">📧 Email Address</label>
+            <input type="email" class="field-input readonly" id="user-email" disabled>
+            <button class="copy-btn" onclick="copyField('user-email')">Copy</button>
+        </div>
+
+        <!-- 💾 Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-cancel" onclick="cancelEdit()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="btn btn-save" id="save-btn" onclick="saveProfile()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+
+        <!-- 📊 Account Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-value" id="stat-balance">0</span>
+                <span class="stat-label">Balance</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="stat-spent">0</span>
+                <span class="stat-label">Total Spent</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="stat-orders">0</span>
+                <span class="stat-label">Orders</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 👨‍💼 Admin Account Section -->
+    <div class="admin-section">
+        <div class="admin-title"><i class="fas fa-shield-alt"></i> Admin Account</div>
+        <div class="admin-info">
+            <b>Admin Name:</b> Johnny Admin<br>
+            <b>Role:</b> System Administrator<br>
+            <b>Support Hours:</b> Daily 8:30 AM - 10:00 PM<br><br>
+            <b>Need Help?</b> Contact admin for assistance with:<br>
+            • Payment issues<br>
+            • Order problems<br>
+            • Account verification<br>
+            • General inquiries
+        </div>
+        <a href="https://t.me/Johnny_AZM" target="_blank" class="admin-contact">
+            <i class="fab fa-telegram-plane"></i> Chat with Admin on Telegram
+        </a>
+    </div>
+</div>
+<!-- 🔔 Toast Notification -->
+<div class="toast" id="toast">
+    <i class="fas fa-info-circle" id="toast-icon"></i>
+    <span id="toast-msg"></span>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
+        authDomain: "johnny-gaming-shop.firebaseapp.com",
+        projectId: "johnny-gaming-shop",
+        storageBucket: "johnny-gaming-shop.firebasestorage.app",
+        messagingSenderId: "833081291484",
+        appId: "1:833081291484:web:4dd45b8c5788e95fc4ba19"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let originalData = {};
+
+    // 🔐 Auth Check
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+        currentUser = user;
+        await loadProfile(user.uid);
+    });
+
+    // 👤 Load Profile Data
+    async function loadProfile(uid) {
+        try {
+            const docSnap = await getDoc(doc(db, "users", uid));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                // Store original data for cancel feature
+                originalData = { ...data };
+
+                // Update UI
+                document.getElementById('display-name').value = data.displayName || '';                document.getElementById('phone-number').value = data.phoneNumber || '';
+                document.getElementById('user-uid').value = uid;
+                document.getElementById('user-email').value = currentUser.email || 'N/A';
+                
+                // Update Avatar
+                const name = data.displayName || currentUser.email?.split('@')[0] || 'U';
+                document.getElementById('avatar-display').innerText = name.substring(0, 2).toUpperCase();
+                
+                // Update Stats
+                document.getElementById('stat-balance').innerText = (data.balance || 0).toLocaleString();
+                document.getElementById('stat-spent').innerText = (data.total_spent || 0).toLocaleString();
+                document.getElementById('stat-orders').innerText = data.orderCount || 0;
+            }
+        } catch (error) {
+            console.error("Load profile error:", error);
+            showToast('❌ Profile data မဆွဲယူနိုင်ပါ', 'error');
+        }
+    }
+
+    // 💾 Save Profile Changes
+    window.saveProfile = async function() {
+        if (!currentUser) return;
+        
+        const btn = document.getElementById('save-btn');
+        const displayName = document.getElementById('display-name').value.trim();
+        const phoneNumber = document.getElementById('phone-number').value.trim();
+
+        // Validation
+        if (!displayName) {
+            showToast('⚠️ Display Name ထည့်ပေးပါ', 'info');
+            document.getElementById('display-name').focus();
+            return;
+        }
+
+        // Loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        try {
+            await updateDoc(doc(db, "users", currentUser.uid), {
+                displayName: displayName,
+                phoneNumber: phoneNumber,
+                updatedAt: new Date()
+            });
+
+            showToast('✅ Profile update အောင်မြင်ပါပြီ!', 'success');
+            
+            // Refresh stats if needed
+            const docSnap = await getDoc(doc(db, "users", currentUser.uid));
+            if (docSnap.exists()) {                const data = docSnap.data();
+                document.getElementById('stat-balance').innerText = (data.balance || 0).toLocaleString();
+                document.getElementById('stat-spent').innerText = (data.total_spent || 0).toLocaleString();
+            }
+        } catch (error) {
+            console.error("Save error:", error);
+            showToast('❌ Save မအောင်မြင်ပါ: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
+    }
+
+    // ❌ Cancel Edit (Revert to original)
+    window.cancelEdit = function() {
+        document.getElementById('display-name').value = originalData.displayName || '';
+        document.getElementById('phone-number').value = originalData.phoneNumber || '';
+        showToast('🔄 Changes cancelled', 'info');
+    }
+
+    // 📋 Copy Field Value
+    window.copyField = async function(fieldId) {
+        const input = document.getElementById(fieldId);
+        const btn = input.nextElementSibling;
+        const value = input.value;
+        
+        if (!value) return;
+        
+        try {
+            await navigator.clipboard.writeText(value);
+            const original = btn.innerText;
+            btn.innerText = '✓';
+            btn.classList.add('copied');
+            showToast('📋 Copied to clipboard!', 'success', 1500);
+            setTimeout(() => { btn.innerText = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) {
+            showToast('❌ Copy failed', 'error');
+        }
+    }
+
+    // 🖼️ Avatar Preview (Optional - for future image upload)
+    document.getElementById('avatar-input')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // For demo: show preview only (actual upload needs Firebase Storage)
+                const avatar = document.getElementById('avatar-display');
+                avatar.style.backgroundImage = `url(${event.target.result})`;
+                avatar.style.backgroundSize = 'cover';                avatar.style.backgroundPosition = 'center';
+                avatar.innerText = '';
+                showToast('🖼️ Avatar preview updated (Demo only)', 'info', 3000);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 🎨 Toast Notification
+    function showToast(message, type = 'info', duration = 2500) {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toast-icon');
+        const msg = document.getElementById('toast-msg');
+        
+        msg.textContent = message;
+        toast.className = `toast ${type} show`;
+        
+        if (type === 'success') icon.className = 'fas fa-check-circle';
+        else if (type === 'error') icon.className = 'fas fa-exclamation-circle';
+        else icon.className = 'fas fa-info-circle';
+        
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // ⌨️ Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.activeElement.classList.contains('field-input')) {
+            saveProfile();
+        }
+        if (e.key === 'Escape') {
+            cancelEdit();
+        }
+    });
+</script>
+
+</body>
+</html>
