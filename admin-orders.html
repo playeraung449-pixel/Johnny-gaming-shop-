@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>📦 Admin Orders - Johnny Gaming Shop</title>
+    <title>🔐 Admin Orders - Johnny Gaming Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -12,6 +12,46 @@
             background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
             color: #fff; min-height: 100vh; padding-bottom: 30px;
         }
+
+        /* 🔐 PIN Lock Modal - Full Screen Overlay */
+        #pin-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .pin-card {
+            background: linear-gradient(180deg, #002d5a, #001f3f);
+            padding: 30px 25px; border-radius: 24px; width: 90%; max-width: 360px;
+            text-align: center; border: 2px solid #FFC107;
+            box-shadow: 0 0 40px rgba(255,193,7,0.3);
+        }
+        .pin-title { font-size: 18px; font-weight: bold; color: #FFC107; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .pin-input {
+            width: 100%; padding: 15px; font-size: 24px; text-align: center;
+            letter-spacing: 15px; border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px; background: rgba(255,255,255,0.1); color: white;
+            margin-bottom: 15px; outline: none; transition: border-color 0.2s;
+        }
+        .pin-input:focus { border-color: #FFC107; }
+        .pin-input::placeholder { letter-spacing: 3px; color: rgba(255,255,255,0.3); }
+        
+        .pin-btn {
+            width: 100%; padding: 14px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #FFC107, #FF9800); color: #333;
+            font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s;
+        }
+        .pin-btn:hover { transform: translateY(-2px); }
+        .pin-btn:disabled { background: #555; cursor: not-allowed; transform: none; }
+        
+        .pin-error { color: #ff6b6b; font-size: 12px; margin-top: 10px; min-height: 18px; }
+        .pin-hint { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 15px; }        .pin-logout { 
+            margin-top: 20px; color: rgba(255,255,255,0.6); font-size: 12px; 
+            cursor: pointer; text-decoration: underline; 
+        }
+        .pin-logout:hover { color: #fff; }
 
         /* 🎮 Header */
         .header {
@@ -30,10 +70,7 @@
         .container { padding: 15px; max-width: 1200px; margin: auto; }
 
         /* 📊 Stats Dashboard */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-            margin-bottom: 20px;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .stat-card {
             background: rgba(255,255,255,0.08); border-radius: 14px;
             padding: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1);
@@ -47,7 +84,8 @@
         /* 🔍 Search & Filter Bar */
         .filter-bar {
             background: rgba(255,255,255,0.08); border-radius: 14px;
-            padding: 15px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;        }
+            padding: 15px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;
+        }
         .filter-input {
             flex: 1; min-width: 200px; padding: 10px 14px; border-radius: 10px;
             border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
@@ -58,8 +96,7 @@
             padding: 10px 14px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.2);
             background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none;
         }
-        .filter-btn {
-            padding: 10px 20px; border-radius: 10px; border: none;
+        .filter-btn {            padding: 10px 20px; border-radius: 10px; border: none;
             background: linear-gradient(135deg, #00AEEF, #0072BC); color: white;
             font-weight: 600; cursor: pointer; transition: transform 0.2s;
         }
@@ -96,7 +133,8 @@
 
         /* 🎯 Status Badges */
         .status-badge {
-            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;            text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;
         }
         .status-pending { background: rgba(255,193,7,0.2); color: #FFC107; border: 1px solid #FFC107; }
         .status-completed { background: rgba(40,167,69,0.2); color: #28A745; border: 1px solid #28A745; }
@@ -107,8 +145,7 @@
             padding: 6px 12px; border-radius: 8px; border: none; font-size: 11px;
             cursor: pointer; transition: all 0.2s; margin-right: 5px;
         }
-        .btn-complete { background: rgba(40,167,69,0.2); color: #28A745; border: 1px solid #28A745; }
-        .btn-complete:hover { background: #28A745; color: white; }
+        .btn-complete { background: rgba(40,167,69,0.2); color: #28A745; border: 1px solid #28A745; }        .btn-complete:hover { background: #28A745; color: white; }
         .btn-reject { background: rgba(220,53,69,0.2); color: #DC3545; border: 1px solid #DC3545; }
         .btn-reject:hover { background: #DC3545; color: white; }
         .btn-view { background: rgba(0,174,239,0.2); color: #00AEEF; border: 1px solid #00AEEF; }
@@ -121,7 +158,6 @@
             align-items: center; justify-content: center; padding: 20px;
         }
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .modal {
             background: linear-gradient(180deg, #002d5a, #001f3f);
@@ -145,7 +181,8 @@
         .modal-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
         .modal-label { color: rgba(255,255,255,0.6); }
         .modal-value { font-weight: 600; color: #fff; text-align: right; word-break: break-all; }
-        .modal-value.copyable { cursor: pointer; position: relative; }        .modal-value.copyable:hover { color: #00AEEF; }
+        .modal-value.copyable { cursor: pointer; position: relative; }
+        .modal-value.copyable:hover { color: #00AEEF; }
         
         .modal-screenshot {
             width: 100%; max-height: 200px; object-fit: contain;
@@ -157,9 +194,7 @@
             padding: 15px 20px 20px; border-top: 1px solid rgba(255,255,255,0.1);
             display: flex; gap: 10px; justify-content: flex-end;
         }
-        
-        /* 📝 Reject Reason Input */
-        .reject-reason {
+                .reject-reason {
             width: 100%; padding: 10px; border-radius: 10px;
             border: 2px solid rgba(220,53,69,0.3); background: rgba(220,53,69,0.1);
             color: white; font-size: 13px; margin-top: 10px; resize: vertical;
@@ -174,15 +209,15 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;
             display: flex; align-items: center; gap: 10px; max-width: 350px;
             transition: transform 0.3s ease; border-left: 4px solid #00AEEF;
+            transform: translateX(150%);
         }
         .toast.show { transform: translateX(0); }
-        .toast.hidden { transform: translateX(150%); }
         .toast.success { border-left-color: #28A745; }
         .toast.error { border-left-color: #DC3545; }
         .toast.warning { border-left-color: #FFC107; }
         .toast i { font-size: 18px; }
 
-        /* ⏳ Loading State */
+        /* ⏳ Loading & Empty States */
         .loading-row { text-align: center; padding: 30px; color: rgba(255,255,255,0.6); }
         .loading-spinner {
             width: 30px; height: 30px; border: 3px solid rgba(0,174,239,0.3);
@@ -190,12 +225,9 @@
             animation: spin 0.8s linear infinite; margin: 0 auto 10px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* 📭 Empty State */
-        .empty-state {
-            text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.6);
-        }        .empty-state i { font-size: 48px; margin-bottom: 15px; opacity: 0.5; display: block; }
-        .empty-state p { font-size: 14px; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.6); }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; opacity: 0.5; display: block; }
 
         /* 📱 Responsive */
         @media (max-width: 768px) {
@@ -209,10 +241,22 @@
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
             .orders-table { display: block; overflow-x: auto; }
+            .pin-card { padding: 25px 20px; }
         }
-    </style>
-</head>
+    </style></head>
 <body>
+
+<!-- 🔐 PIN Lock Overlay (First Load) -->
+<div id="pin-overlay">
+    <div class="pin-card">
+        <div class="pin-title"><i class="fas fa-lock"></i> Admin Security PIN</div>
+        <input type="password" id="pin-input" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+        <button class="pin-btn" id="pin-submit" onclick="verifyPIN()">🔓 Unlock Admin Panel</button>
+        <div class="pin-error" id="pin-error"></div>
+        <div class="pin-hint">⚠️ 3 ကြိမ်မှားရင် 5 မိနစ် စောင့်ရပါမည်</div>
+        <div class="pin-logout" onclick="forceLogout()">🚪 Logout from all</div>
+    </div>
+</div>
 
 <!-- 🎮 Header -->
 <div class="header">
@@ -226,23 +270,12 @@
 <div class="container">
     <!-- 📊 Stats Dashboard -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <span class="stat-value" id="stat-total">0</span>
-            <span class="stat-label">Total Orders</span>
-        </div>
-        <div class="stat-card pending">
-            <span class="stat-value" id="stat-pending">0</span>
-            <span class="stat-label">Pending</span>
-        </div>
-        <div class="stat-card completed">
-            <span class="stat-value" id="stat-completed">0</span>
-            <span class="stat-label">Completed</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-value" id="stat-revenue">0</span>
-            <span class="stat-label">Revenue (Ks)</span>
-        </div>
+        <div class="stat-card"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Orders</span></div>
+        <div class="stat-card pending"><span class="stat-value" id="stat-pending">0</span><span class="stat-label">Pending</span></div>
+        <div class="stat-card completed"><span class="stat-value" id="stat-completed">0</span><span class="stat-label">Completed</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-revenue">0</span><span class="stat-label">Revenue (Ks)</span></div>
     </div>
+
     <!-- 🔍 Search & Filter -->
     <div class="filter-bar">
         <input type="text" class="filter-input" id="search-input" placeholder="🔍 Search by ID, Email, Game...">
@@ -259,14 +292,11 @@
             <option value="PUBG Mobile">PUBG Mobile</option>
             <option value="Magic Chess">Magic Chess</option>
             <option value="Honor of Kings">Honor of Kings</option>
-            <option value="Roblox">Roblox</option>
-            <option value="Telegram Premium">Telegram Premium</option>
+            <option value="Roblox">Roblox</option>            <option value="Telegram Premium">Telegram Premium</option>
             <option value="BIGO Live">BIGO Live</option>
         </select>
         <button class="filter-btn" onclick="applyFilters()">🔍 Filter</button>
-        <button class="export-btn" onclick="exportOrders()">
-            <i class="fas fa-file-csv"></i> Export CSV
-        </button>
+        <button class="export-btn" onclick="exportOrders()"><i class="fas fa-file-csv"></i> Export CSV</button>
     </div>
 
     <!-- 📋 Orders Table -->
@@ -278,21 +308,16 @@
         <table class="orders-table">
             <thead>
                 <tr>
-                    <th>Order ID</th>
-                    <th>User</th>
-                    <th>Game</th>
-                    <th>Item</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Time</th>
-                    <th>Actions</th>
+                    <th>Order ID</th><th>User</th><th>Game</th><th>Item</th>
+                    <th>Price</th><th>Status</th><th>Time</th><th>Actions</th>
                 </tr>
             </thead>
             <tbody id="orders-body">
                 <tr><td colspan="8" class="loading-row"><div class="loading-spinner"></div>Loading orders...</td></tr>
             </tbody>
         </table>
-    </div></div>
+    </div>
+</div>
 
 <!-- 🔍 Order Details Modal -->
 <div class="modal-overlay" id="order-modal" onclick="closeModal(event)">
@@ -301,26 +326,21 @@
             <div class="modal-title">📦 Order Details</div>
             <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body" id="modal-content">
-            <!-- Dynamic content loaded here -->
-        </div>
-        <div class="modal-actions" id="modal-actions">
-            <!-- Dynamic actions loaded here -->
-        </div>
+        <div class="modal-body" id="modal-content"></div>
+        <div class="modal-actions" id="modal-actions"></div>
     </div>
 </div>
 
 <!-- 🔔 Toast Notification -->
-<div class="toast hidden" id="toast">
+<div class="toast" id="toast">
     <i class="fas fa-info-circle" id="toast-icon"></i>
     <span id="toast-msg"></span>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
     const firebaseConfig = {
         apiKey: "AIzaSyBND149pej01agdV6M0AH-n4Fyc8Yml6wQ",
         authDomain: "johnny-gaming-shop.firebaseapp.com",
@@ -336,40 +356,142 @@
 
     let allOrders = [];
     let currentOrder = null;
+    const CORRECT_PIN = "2009";
+    const PIN_KEY = "admin_pin_verified";
+    const ATTEMPTS_KEY = "admin_pin_attempts";
 
-    // 🔐 Admin Auth Check
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.href = "login.html";
-            return;        }
+     // 🔐 PIN Verification System
+    function checkPINSession() {
+        const verified = localStorage.getItem(PIN_KEY);
+        const attempts = localStorage.getItem(ATTEMPTS_KEY);
+        const now = Date.now();
         
-        // Check if user is admin
-        const userDoc = await getDocs(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.role !== 'admin') {
-                showToast('❌ Admin access required', 'error');
-                setTimeout(() => window.location.href = "index.html", 1500);
-                return;
+        // Check if locked due to too many attempts
+        if (attempts) {
+            const { count, lockedUntil } = JSON.parse(attempts);
+            if (count >= 3 && now < lockedUntil) {
+                const remaining = Math.ceil((lockedUntil - now) / 1000 / 60);
+                showError(`🔒 Too many attempts. Wait ${remaining} min.`);
+                return false;
+            } else if (now >= lockedUntil) {
+                // Reset after lockout expires
+                localStorage.removeItem(ATTEMPTS_KEY);
             }
         }
         
-        // Load orders
-        await loadOrders();
-    });
+        // Check if already verified in last 24 hours
+        if (verified) {
+            const { timestamp } = JSON.parse(verified);
+            if (now - timestamp < 24 * 60 * 60 * 1000) {
+                hidePINOverlay();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function recordAttempt(success) {
+        const now = Date.now();
+        let attempts = JSON.parse(localStorage.getItem(ATTEMPTS_KEY) || '{"count":0,"lockedUntil":0}');
+        
+        if (success) {
+            localStorage.setItem(PIN_KEY, JSON.stringify({ timestamp: now }));
+            localStorage.removeItem(ATTEMPTS_KEY);
+        } else {
+            attempts.count++;
+            if (attempts.count >= 3) {
+                attempts.lockedUntil = now + 5 * 60 * 1000; // 5 minutes lockout
+                showError(`🔒 Locked for 5 minutes`);
+            }
+            localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('pin-error');
+        el.textContent = msg;
+        el.style.animation = 'none';
+        setTimeout(() => el.style.animation = 'shake 0.3s', 10);
+    }
+
+    function hidePINOverlay() {
+        const overlay = document.getElementById('pin-overlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+
+    window.verifyPIN = function() {
+        const input = document.getElementById('pin-input').value;
+        const btn = document.getElementById('pin-submit');
+        
+        if (input === CORRECT_PIN) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            
+            // Double check: Firebase Admin Role
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    showError('❌ Please login first');
+                    btn.disabled = false;
+                    btn.textContent = '🔓 Unlock Admin Panel';
+                    return;
+                }
+                
+                try {
+                    const userDoc = await getDocs(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'admin') {
+                        recordAttempt(true);
+                        hidePINOverlay();
+                        loadOrders(); // Load content after verification
+                    } else {
+                        showError('❌ Admin access required');
+                        recordAttempt(false);
+                        btn.disabled = false;
+                        btn.textContent = '🔓 Unlock Admin Panel';
+                    }
+                } catch (e) {
+                    showError('❌ Verification failed');
+                    btn.disabled = false;
+                    btn.textContent = '🔓 Unlock Admin Panel';
+                }
+            });
+        } else {
+            showError('❌ Wrong PIN');
+            recordAttempt(false);
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-input').focus();
+        }
+    };
+
+    window.forceLogout = async function() {
+        localStorage.removeItem(PIN_KEY);
+        localStorage.removeItem(ATTEMPTS_KEY);
+        await signOut(auth);
+        window.location.href = "login.html";
+    };
+
+    // Initialize PIN check on load
+    if (!checkPINSession()) {
+        document.getElementById('pin-input').focus();
+        // Enter key support
+        document.getElementById('pin-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyPIN();
+        });
+    } else {
+        // If PIN already verified, load orders immediately
+        onAuthStateChanged(auth, (user) => {
+            if (user) loadOrders();
+            else window.location.href = "login.html";
+        });
+    }
 
     // 📦 Load Orders from Firebase
     async function loadOrders() {
         try {
-            // Note: For production, use collectionGroup query or admin-specific collection
-            // This is a simplified version - in reality, you'd query all users' orders
-            
             const ordersBody = document.getElementById('orders-body');
             ordersBody.innerHTML = '<tr><td colspan="8" class="loading-row"><div class="loading-spinner"></div>Loading orders...</td></tr>';
             
             allOrders = [];
-            
-            // Get all users first (simplified - for demo)
             const usersRef = collection(db, "users");
             const usersSnap = await getDocs(usersRef);
             
@@ -380,17 +502,11 @@
                 
                 purchasesSnap.forEach(pDoc => {
                     const data = pDoc.data();
-                    allOrders.push({
-                        id: pDoc.id,
-                        uid: uid,
-                        userEmail: data.buyerEmail || 'N/A',
-                        ...data
-                    });
+                    allOrders.push({ id: pDoc.id, uid: uid, userEmail: data.buyerEmail || 'N/A', ...data });
                 });
             }
             
-            // Sort by time descending
-            allOrders.sort((a, b) => (b.time?.toDate?.() || 0) - (a.time?.toDate?.() || 0));            
+            allOrders.sort((a, b) => (b.time?.toDate?.() || 0) - (a.time?.toDate?.() || 0));
             renderOrders(allOrders);
             updateStats();
             
@@ -398,11 +514,9 @@
             console.error("Load orders error:", error);
             document.getElementById('orders-body').innerHTML = 
                 '<tr><td colspan="8" class="loading-row" style="color:#ff6b6b">❌ Error loading orders</td></tr>';
-            showToast('❌ Failed to load orders', 'error');
         }
     }
-
-  // 📋 Render Orders Table
+ // 📋 Render Orders Table
     function renderOrders(orders) {
         const tbody = document.getElementById('orders-body');
         const countEl = document.getElementById('orders-count');
@@ -417,10 +531,7 @@
         
         tbody.innerHTML = orders.map(order => {
             const time = order.time?.toDate?.() || new Date();
-            const timeStr = time.toLocaleString('my-MM', { 
-                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-            });
-            
+            const timeStr = time.toLocaleString('my-MM', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             const statusClass = `status-${order.status || 'pending'}`;
             const statusIcon = order.status === 'completed' ? '✅' : order.status === 'rejected' ? '❌' : '⏳';
             const statusText = order.status === 'completed' ? 'Completed' : order.status === 'rejected' ? 'Rejected' : 'Pending';
@@ -451,8 +562,7 @@
         const total = allOrders.length;
         const pending = allOrders.filter(o => o.status === 'pending').length;
         const completed = allOrders.filter(o => o.status === 'completed').length;
-        const revenue = allOrders.filter(o => o.status === 'completed')
-            .reduce((sum, o) => sum + (o.price || 0), 0);
+        const revenue = allOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.price || 0), 0);
         
         document.getElementById('stat-total').innerText = total;
         document.getElementById('stat-pending').innerText = pending;
@@ -472,10 +582,8 @@
                 (order.buyerEmail || '').toLowerCase().includes(search) ||
                 (order.gameName || order.game || '').toLowerCase().includes(search) ||
                 (order.itemName || order.item || '').toLowerCase().includes(search);
-            
             const matchesStatus = status === 'all' || order.status === status;
             const matchesGame = game === 'all' || (order.gameName || order.game) === game;
-            
             return matchesSearch && matchesStatus && matchesGame;
         });
         
@@ -485,149 +593,62 @@
 
     // 📤 Export to CSV
     window.exportOrders = function() {
-        if (allOrders.length === 0) {
-            showToast('⚠️ No orders to export', 'warning');
-            return;
-        }
-        
+        if (allOrders.length === 0) { showToast('⚠️ No orders to export', 'warning'); return; }
         const headers = ['Order ID', 'User Email', 'Game', 'Item', 'Price', 'Status', 'Player ID', 'Timestamp'];
-        const rows = allOrders.map(o => [
-            o.id,
-            o.buyerEmail || '',
-            o.gameName || o.game || '',
-            o.itemName || o.item || '',
-            o.price || 0,
-            o.status || 'pending',
-            o.playerID || o.player || '',
-            o.time?.toDate?.().toLocaleString() || ''
-        ]);
-        
+        const rows = allOrders.map(o => [o.id, o.buyerEmail || '', o.gameName || o.game || '', o.itemName || o.item || '', o.price || 0, o.status || 'pending', o.playerID || o.player || '', o.time?.toDate?.().toLocaleString() || '']);
         const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
+        a.href = url; a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click();
         URL.revokeObjectURL(url);
-        
         showToast('✅ Orders exported successfully!', 'success');
     }
-// 👁️ View Order Details Modal
+
+    // 👁️ View Order Details Modal
     window.viewOrder = async function(orderId) {
         const order = allOrders.find(o => o.id === orderId);
         if (!order) return;
-        
         currentOrder = order;
         const time = order.time?.toDate?.() || new Date();
         
-        const content = document.getElementById('modal-content');
-        content.innerHTML = `
-            <div class="modal-row">
-                <span class="modal-label">Order ID</span>
-                <span class="modal-value copyable" onclick="copyText('${order.id}')">${order.id}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">User UID</span>
-                <span class="modal-value copyable" onclick="copyText('${order.uid}')">${order.uid}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Email</span>
-                <span class="modal-value copyable" onclick="copyText('${order.buyerEmail || 'N/A'}')">${order.buyerEmail || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Game</span>
-                <span class="modal-value">${order.gameName || order.game || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Item</span>
-                <span class="modal-value">${order.itemName || order.item || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Price</span>
-                <span class="modal-value" style="color:#00AEEF">${(order.price || 0).toLocaleString()} Ks</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Player ID</span>
-                <span class="modal-value copyable" onclick="copyText('${order.playerID || order.player || 'N/A'}')">${order.playerID || order.player || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Status</span>
-                <span class="modal-value">
-                    <span class="status-badge status-${order.status || 'pending'}">
-                        ${order.status === 'completed' ? '✅' : order.status === 'rejected' ? '❌' : '⏳'} 
-                        ${order.status || 'pending'}
-                    </span>
-                </span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Time</span>
-                <span class="modal-value">${time.toLocaleString('my-MM')}</span>
-            </div>
-            ${order.screenshot ? `
-            <div style="margin-top:15px">
-                <div class="modal-label">Payment Screenshot</div>
-                <img src="${order.screenshot}" class="modal-screenshot" alt="Payment proof" onclick="openImageFullscreen('${order.screenshot}')">
-            </div>` : ''}
-            ${order.adminNote ? `
-            <div style="margin-top:15px;padding:10px;background:rgba(255,255,255,0.1);border-radius:10px">
-                <div class="modal-label" style="margin-bottom:5px">Admin Note</div>
-                <div style="font-size:13px;color:#fff">${order.adminNote}</div>
-            </div>` : ''}
+        document.getElementById('modal-content').innerHTML = `
+            <div class="modal-row"><span class="modal-label">Order ID</span><span class="modal-value copyable" onclick="copyText('${order.id}')">${order.id}</span></div>
+            <div class="modal-row"><span class="modal-label">User UID</span><span class="modal-value copyable" onclick="copyText('${order.uid}')">${order.uid}</span></div>
+            <div class="modal-row"><span class="modal-label">Email</span><span class="modal-value copyable" onclick="copyText('${order.buyerEmail || 'N/A'}')">${order.buyerEmail || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Game</span><span class="modal-value">${order.gameName || order.game || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Item</span><span class="modal-value">${order.itemName || order.item || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Price</span><span class="modal-value" style="color:#00AEEF">${(order.price || 0).toLocaleString()} Ks</span></div>
+            <div class="modal-row"><span class="modal-label">Player ID</span><span class="modal-value copyable" onclick="copyText('${order.playerID || order.player || 'N/A'}')">${order.playerID || order.player || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Status</span><span class="modal-value"><span class="status-badge status-${order.status || 'pending'}">${order.status === 'completed' ? '✅' : order.status === 'rejected' ? '❌' : '⏳'} ${order.status || 'pending'}</span></span></div>
+            <div class="modal-row"><span class="modal-label">Time</span><span class="modal-value">${time.toLocaleString('my-MM')}</span></div>
+            ${order.screenshot ? `<div style="margin-top:15px"><div class="modal-label">Payment Screenshot</div><img src="${order.screenshot}" class="modal-screenshot" alt="Payment proof" onclick="openImageFullscreen('${order.screenshot}')"></div>` : ''}
+            ${order.adminNote ? `<div style="margin-top:15px;padding:10px;background:rgba(255,255,255,0.1);border-radius:10px"><div class="modal-label" style="margin-bottom:5px">Admin Note</div><div style="font-size:13px;color:#fff">${order.adminNote}</div></div>` : ''}
         `;
         
-        // Show/hide action buttons based on status
         const actions = document.getElementById('modal-actions');
         if (order.status === 'pending') {
-            actions.innerHTML = `
-                <button class="action-btn btn-complete" style="padding:10px 20px" onclick="updateStatus('${order.id}', 'completed')">✅ Mark Completed</button>
-                <button class="action-btn btn-reject" style="padding:10px 20px" onclick="showRejectModal('${order.id}')">❌ Reject Order</button>
-            `;
+            actions.innerHTML = `<button class="action-btn btn-complete" style="padding:10px 20px" onclick="updateStatus('${order.id}', 'completed')">✅ Mark Completed</button><button class="action-btn btn-reject" style="padding:10px 20px" onclick="showRejectModal('${order.id}')">❌ Reject Order</button>`;
         } else {
             actions.innerHTML = `<button class="action-btn btn-view" style="padding:10px 20px" onclick="closeModal()">Close</button>`;
         }
-        
         document.getElementById('order-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
-    // ❌ Show Reject Modal with Reason
+    // ❌ Show Reject Modal
     window.showRejectModal = function(orderId) {
         const order = allOrders.find(o => o.id === orderId);
         if (!order) return;
-        
         currentOrder = order;
-        
-        const content = document.getElementById('modal-content');
-        content.innerHTML = `
-            <div style="text-align:center;margin-bottom:15px">
-                <i class="fas fa-exclamation-triangle" style="font-size:32px;color:#DC3545"></i>
-                <h3 style="margin:10px 0 5px">Reject Order</h3>
-                <p style="color:rgba(255,255,255,0.7);font-size:13px">Order ID: ${orderId.substring(0, 10)}...</p>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">User Email</span>
-                <span class="modal-value">${order.buyerEmail || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Item</span>
-                <span class="modal-value">${order.itemName || order.item || 'N/A'}</span>
-            </div>
-            <div class="modal-row">
-                <span class="modal-label">Price</span>
-                <span class="modal-value" style="color:#00AEEF">${(order.price || 0).toLocaleString()} Ks</span>
-            </div>
-            <div style="margin-top:15px">
-                <label class="field-label" style="color:#DC3545">Rejection Reason (Required)</label>
-                <textarea class="reject-reason" id="reject-reason" placeholder="Why are you rejecting this order? (User will see this)"></textarea>
-            </div>
+        document.getElementById('modal-content').innerHTML = `
+            <div style="text-align:center;margin-bottom:15px"><i class="fas fa-exclamation-triangle" style="font-size:32px;color:#DC3545"></i><h3 style="margin:10px 0 5px">Reject Order</h3><p style="color:rgba(255,255,255,0.7);font-size:13px">Order ID: ${orderId.substring(0, 10)}...</p></div>
+            <div class="modal-row"><span class="modal-label">User Email</span><span class="modal-value">${order.buyerEmail || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Item</span><span class="modal-value">${order.itemName || order.item || 'N/A'}</span></div>
+            <div class="modal-row"><span class="modal-label">Price</span><span class="modal-value" style="color:#00AEEF">${(order.price || 0).toLocaleString()} Ks</span></div>
+            <div style="margin-top:15px"><label class="field-label" style="color:#DC3545">Rejection Reason (Required)</label><textarea class="reject-reason" id="reject-reason" placeholder="Why are you rejecting this order?"></textarea></div>
         `;
-        
-        document.getElementById('modal-actions').innerHTML = `
-            <button class="action-btn btn-view" style="padding:10px 20px" onclick="closeModal()">Cancel</button>
-            <button class="action-btn btn-reject" style="padding:10px 20px;background:#DC3545;color:white" onclick="confirmReject()">❌ Confirm Reject</button>
-        `;
-        
+        document.getElementById('modal-actions').innerHTML = `<button class="action-btn btn-view" style="padding:10px 20px" onclick="closeModal()">Cancel</button><button class="action-btn btn-reject" style="padding:10px 20px;background:#DC3545;color:white" onclick="confirmReject()">❌ Confirm Reject</button>`;
         document.getElementById('order-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -635,10 +656,8 @@
     // ✅ Update Order Status
     window.updateStatus = async function(orderId, newStatus) {
         try {
-            // Find the user who made this order
             const usersRef = collection(db, "users");
             const usersSnap = await getDocs(usersRef);
-            
             for (const userDoc of usersSnap.docs) {
                 const orderRef = doc(db, "users", userDoc.id, "purchases", orderId);
                 try {
@@ -647,44 +666,23 @@
                         updatedAt: new Date(),
                         adminNote: newStatus === 'rejected' ? document.getElementById('reject-reason')?.value || 'No reason provided' : undefined
                     });
-                    
-                    // Update local data
                     const order = allOrders.find(o => o.id === orderId);
-                    if (order) {
-                        order.status = newStatus;
-                        if (newStatus === 'rejected') order.adminNote = document.getElementById('reject-reason')?.value;
-                    }
-                    
-                    renderOrders(allOrders);
-                    updateStats();
-                    closeModal();
-                    
-                    showToast(newStatus === 'completed' ? '✅ Order marked completed!' : '❌ Order rejected', 
-                             newStatus === 'completed' ? 'success' : 'warning');
+                    if (order) { order.status = newStatus; if (newStatus === 'rejected') order.adminNote = document.getElementById('reject-reason')?.value; }
+                    renderOrders(allOrders); updateStats(); closeModal();
+                    showToast(newStatus === 'completed' ? '✅ Order marked completed!' : '❌ Order rejected', newStatus === 'completed' ? 'success' : 'warning');
                     return;
-                } catch (e) {
-                    // Try next user
-                }
+                } catch (e) {}
             }
-            
             showToast('❌ Order not found', 'error');
-        } catch (error) {
-            console.error("Update status error:", error);
-            showToast('❌ Failed to update status', 'error');
-        }
+        } catch (error) { showToast('❌ Failed to update status', 'error'); }
     }
 
-    // ❌ Confirm Reject
     window.confirmReject = function() {
         const reason = document.getElementById('reject-reason')?.value?.trim();
-        if (!reason) {
-            showToast('⚠️ Please provide a rejection reason', 'warning');
-            return;
-        }
+        if (!reason) { showToast('⚠️ Please provide a rejection reason', 'warning'); return; }
         updateStatus(currentOrder?.id, 'rejected');
     }
 
-    // 🔍 Close Modal
     window.closeModal = function(event) {
         if (event && event.target !== event.currentTarget) return;
         document.getElementById('order-modal').classList.remove('active');
@@ -692,56 +690,32 @@
         currentOrder = null;
     }
 
-    // 📋 Copy Text to Clipboard
     window.copyText = async function(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-            showToast('📋 Copied to clipboard!', 'success', 1500);
-        } catch (e) {
-            showToast('❌ Copy failed', 'error');
-        }
+        try { await navigator.clipboard.writeText(text); showToast('📋 Copied!', 'success', 1500); } catch (e) { showToast('❌ Copy failed', 'error'); }
     }
 
-    // 🖼️ Open Image Fullscreen (simple version)
     window.openImageFullscreen = function(src) {
         const win = window.open('', '_blank');
         win.document.write(`<img src="${src}" style="max-width:100%;max-height:100vh">`);
     }
 
-    // 🎨 Toast Notification
     function showToast(message, type = 'info', duration = 2500) {
         const toast = document.getElementById('toast');
         const icon = document.getElementById('toast-icon');
         const msg = document.getElementById('toast-msg');
-        
         msg.textContent = message;
         toast.className = `toast ${type} show`;
-        
-        if (type === 'success') icon.className = 'fas fa-check-circle';
-        else if (type === 'error') icon.className = 'fas fa-exclamation-circle';
-        else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
-        else icon.className = 'fas fa-info-circle';
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-            toast.classList.add('hidden');
-        }, duration);
+        icon.className = type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+        setTimeout(() => { toast.classList.remove('show'); }, duration);
     }
-
-    // ⌨️ Keyboard Support
+  // ⌨️ Keyboard Support
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-        if (e.key === 'Enter' && document.getElementById('search-input') === document.activeElement) {
-            applyFilters();
-        }
+        if (e.key === 'Escape') { if (document.getElementById('pin-overlay').style.display !== 'none') document.getElementById('pin-input').blur(); else closeModal(); }
+        if (e.key === 'Enter' && document.getElementById('search-input') === document.activeElement) applyFilters();
     });
 
     // 🔄 Auto-refresh every 30 seconds
-    setInterval(() => {
-        if (document.visibilityState === 'visible') {
-            loadOrders();
-        }
-    }, 30000);
+    setInterval(() => { if (document.visibilityState === 'visible' && document.getElementById('pin-overlay').style.display === 'none') loadOrders(); }, 30000);
 </script>
 
 </body>
