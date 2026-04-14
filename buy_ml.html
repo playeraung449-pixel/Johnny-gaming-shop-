@@ -123,7 +123,7 @@
         const token = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
         const chat_id = "6427719618";
         
-        const message = `🎮 **JOHNNY SHOP - MLBB ORDER**\n━━━━━━━━━━━━━━━━━━\n📊 **ဂိမ်း:** Mobile Legends\n🆔 **ID/Server:** ${details.playerID}\n💎 **ပစ္စည်း:** ${details.itemName}\n💰 **ကျသင့်ငွေ:** ${details.price} Ks\n📧 **ဝယ်သူ:** ${details.userEmail}\n━━━━━━━━━━━━━━━━━━\nသားကြီး... အော်ဒါတက်လာပြီ အမြန်ဖြည့်ပေးလိုက်တော့! ⚔️`;
+        const message = `🎮 **JOHNNY SHOP - MLBB ORDER**\n━━━━━━━━━━━━━━━━━━\n📊 **ဂိမ်း:** Mobile Legends\n🆔 **ID/Server:** ${details.playerID}\n💎 **ပစ္စည်း:** ${details.itemName}\n📑 **user UID** ${user.UID}\n💰 **ကျသင့်ငွေ:** ${details.price} Ks\n📧 **ဝယ်သူ:** ${details.userEmail}\n━━━━━━━━━━━━━━━━━━\nသားကြီး... အော်ဒါတက်လာပြီ အမြန်ဖြည့်ပေးလိုက်တော့! ⚔️`;
 
         const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
         try { await fetch(url); } catch (e) { console.error(e); }
