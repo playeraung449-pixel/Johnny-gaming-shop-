@@ -31,6 +31,19 @@
         .btn-msg { background: #6f42c1; color: white; }
         .btn-nav { background: #444; color: white; text-decoration: none; text-align: center; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; border:none; }
         .nav-btns { display: flex; gap: 10px; margin-top: 20px; }
+/* အဟောင်းရှိပြီးသား .btn-done အောက်မှာ ဒါလေးထပ်ထည့်ပေးပါ */
+.btn-reject { 
+    background: #dc3545; 
+    color: white; 
+    padding: 8px; 
+    width: 100%; 
+    border-radius: 5px; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
+    margin-top: 5px; /* Done button နဲ့ ခြားဖို့ */
+}
+.btn-reject:hover { background: #c82333; }
 
         /* အသစ်ထည့်ထားတဲ့ Purchase List Style */
         .order-item { background: #00152b; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #004080; }
@@ -191,7 +204,34 @@
             } catch (e) { alert("Error: " + e.message); }
         }
     }
-
+// ✅ completeOrder function အောက်မှာ ဒါလေးထပ်ထည့်ပေးပါ
+window.rejectOrder = async function(uid, orderId) {
+    if(confirm("ဒီအော်ဒါကို လက်မခံဘူးလို့ သတ်မှတ်မလား Boss?")) {
+        try {
+            const orderRef = doc(db, "users", uid, "purchases", orderId);
+            
+            // 1. Order status ကို rejected လို့ ပြောင်းမယ်
+            await updateDoc(orderRef, { 
+                status: "rejected",
+                rejectedAt: serverTimestamp() 
+            });
+            
+            // 2. User ဆီကို "လက်မခံပါဘူး" ဆိုတဲ့ စာပို့မယ် (history.html မှာပေါ်ဖို့)
+            await addDoc(collection(db, "users", uid, "notifications"), {
+                text: "❌ ဝယ်ယူမှုကို လက်မခံပါဘူး။ အကြောင်းအရင်းကို Admin ထံ ဆက်သွယ်မေးမြန်းနိုင်ပါတယ်။", 
+                time: serverTimestamp(), 
+                read: false,
+                type: "admin_reject"  // type အသစ်ထည့်ထားတာမို့ history.html မှာ ခွဲခြားပြနိုင်ပါတယ်
+            });
+            
+            alert("အော်ဒါကို လက်မခံကြောင်း ပြောင်းလဲပြီးပါပြီ!");
+            checkUser(); // List ကို ပြန် update လုပ်ဖို့
+            
+        } catch (e) { 
+            alert("Error: " + e.message); 
+        }
+    }
+}
     window.updateBalance = async function() {
         const uid = document.getElementById('target-uid').value.trim();
         const amt = parseInt(document.getElementById('amount').value);
