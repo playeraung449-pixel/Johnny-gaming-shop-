@@ -111,12 +111,24 @@
                         });
                     }
 
-                    const isSuccess = d.status === "success";
-                    const statusClass = isSuccess ? "st-success" : "st-pending";
-                    const statusText = isSuccess ? "အောင်မြင်သည် ✅" : "ဆောင်ရွက်နေဆဲ ⏳";
-
-                    listArea.innerHTML += `
-                        <div class="history-card" style="border-left-color: ${isSuccess ? '#2E7D32' : '#F57F17'}">
+   // လက်ရှိရှိနေတဲ့ orderHtml ကို အောက်ပါအတိုင်း အစားထိုးပေးပါ
+const history.Html = `
+    <div class="order-item">
+        <div class="order-info">
+            <b>${order.gameName}</b> (${order.itemName})<br>
+            ID: ${order.playerID}<br>
+            Price: ${order.price} Ks<br>
+            Status: <span id="status-${orderId}" class="${order.status !== 'pending' ? 'status-success' : ''}">
+                ${order.status === 'pending' ? 'ဆောင်ရွက်နေဆဲ' : 
+                  order.status === 'success' ? '✅ အောင်မြင်သည်' : '❌ လက်မခံပါ'}
+            </span>
+        </div>
+        ${order.status === 'pending' ? `
+            <button class="btn-done" onclick="completeOrder('${uid}', '${orderId}')">✅ Done လုပ်မည်</button>
+            <button class="btn-reject" onclick="rejectOrder('${uid}', '${orderId}')">❌ လက်မခံဘူး</button>
+        ` : ''}
+    </div>
+`;
                             <span class="game-name">${d.gameName || 'Game Topup'}</span>
                             
                             <div class="info-row">
