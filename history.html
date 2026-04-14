@@ -98,6 +98,12 @@
                     listArea.innerHTML = "<div class='no-data'>ဝယ်ယူထားသော မှတ်တမ်းမရှိသေးပါ Boss! 🛒</div>";
                     return;
                 }
+// history.html မှာ notification ပြတဲ့နေရာမှာ ဥပမာ:
+if (notif.type === "admin_reject") {
+    html += `<div class="notif-item reject">❌ ${notif.text}</div>`;
+} else if (notif.type === "admin_msg") {
+    html += `<div class="notif-item success">✅ ${notif.text}</div>`;
+}
 
                 snapshot.forEach((doc) => {
                     const d = doc.data();
