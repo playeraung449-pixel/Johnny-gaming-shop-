@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History - Johnny Gaming Shop</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: white; padding: 20px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
+        .header-title { font-size: 18px; font-weight: bold; color: #333; }
+
+        .history-container { padding: 15px; padding-bottom: 30px; }
+        
+        /* Section Title */
+        .section-title {
+            color: white; font-size: 15px; font-weight: bold;
+            margin: 20px 0 10px 5px; padding-bottom: 5px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* 📦 Purchase Card Style */
+        .history-card {
+            background: white; padding: 15px; border-radius: 15px;
+            margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-left: 6px solid #1C75BC;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .game-name { font-size: 16px; font-weight: bold; color: #0072BC; margin-bottom: 5px; display: block; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+        .label { color: #777; }
+        .value { color: #333; font-weight: 600; }
+
+        /* ✅ Status Badge Styles - ၃ မျိုးလုံး */
+        .status-badge {            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; margin-top: 8px;
+        }
+        .st-pending { background: #FFF9C4; color: #F57F17; border: 1px solid #F57F17; } 
+        .st-success { background: #E8F5E9; color: #2E7D32; border: 1px solid #2E7D32; } 
+        .st-rejected { background: #FFEBEE; color: #C62828; border: 1px solid #C62828; }
+
+        .date-text { font-size: 11px; color: #bbb; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; display: block; }
+
+        /* 🔔 Notification Card Style */
+        .notif-card {
+            background: rgba(255,255,255,0.95); padding: 12px 15px; border-radius: 12px;
+            margin-bottom: 10px; border-left: 4px solid #1C75BC;
+            animation: slideIn 0.3s ease-out;
+        }
+        .notif-text { font-size: 14px; color: #333; line-height: 1.4; }
+        .notif-time { font-size: 10px; color: #999; margin-top: 6px; }
+        
+        /* Notification Types Colors */
+        .notif-reject { border-left-color: #C62828; }
+        .notif-success { border-left-color: #2E7D32; }
+        .notif-msg { border-left-color: #6f42c1; }
+        .notif-topup { border-left-color: #0072BC; }
+
+        .no-data { text-align: center; color: white; margin-top: 60px; font-size: 14px; opacity: 0.9; }
+        .loading { text-align: center; color: white; margin-top: 30px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .info-row { font-size: 13px; }
+            .game-name { font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <div class="header-title">ဝယ်ယူမှုမှတ်တမ်း</div>
+</div>
+
+<div class="history-container" id="history-list">
+    <div class="loading">Loading history... 🔍</div>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const listArea = document.getElementById('history-list');
+    let currentUser = null;
+    let purchasesChannel = null;
+    let notificationsChannel = null;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            window.location.href = "login.html";
+            return;
+        }
+        
+        currentUser = session.user;
+        
+        // Load both data sources
+        loadPurchases(currentUser.id);
+        loadNotifications(currentUser.id);
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+
+    // ============================
+    // 📦 PURCHASES (ဝယ်ယူမှုများ)
+    // ============================
+    function loadPurchases(uid) {
+        // Initial fetch
+        fetchPurchases(uid);
+        
+        // Setup realtime subscription
+        setupPurchasesRealtime(uid);
+    }
+
+    async function fetchPurchases(uid) {
+        try {
+            const {  purchases, error } = await supabase                .from('purchases')
+                .select('*')
+                .eq('user_id', uid)
+                .order('time', { ascending: false });
+
+            if (error) throw error;
+
+            renderCombined(purchases || [], null, 'purchases');
+        } catch (error) {
+            console.error("Purchases fetch error:", error);
+        }
+    }
+
+    function setupPurchasesRealtime(uid) {
+        if (purchasesChannel) {
+            supabase.removeChannel(purchasesChannel);
+        }
+
+        purchasesChannel = supabase
+            .channel(`purchases:${uid}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'purchases',
+                filter: `user_id=eq.${uid}`
+            }, () => {
+                // Re-fetch on change
+                fetchPurchases(uid);
+            })
+            .subscribe();
+    }
+
+    // ============================
+    // 🔔 NOTIFICATIONS (အကြောင်းကြားစာများ)
+    // ============================
+    function loadNotifications(uid) {
+        // Initial fetch
+        fetchNotifications(uid);
+        
+        // Setup realtime subscription
+        setupNotificationsRealtime(uid);
+    }
+
+    async function fetchNotifications(uid) {
+        try {
+            const {  notifications, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('user_id', uid)
+                .order('time', { ascending: false });
+            if (error) throw error;
+
+            renderCombined(null, notifications || [], 'notifications');
+        } catch (error) {
+            console.error("Notifications fetch error:", error);
+        }
+    }
+
+    function setupNotificationsRealtime(uid) {
+        if (notificationsChannel) {
+            supabase.removeChannel(notificationsChannel);
+        }
+
+        notificationsChannel = supabase
+            .channel(`notifications:${uid}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${uid}`
+            }, () => {
+                // Re-fetch on change
+                fetchNotifications(uid);
+            })
+            .subscribe();
+    }
+
+    // 🔁 Render Combined Data
+    let cachedPurchases = [];
+    let cachedNotifications = [];
+
+    function renderCombined(purchases, notifications, source) {
+        // Update cache
+        if (source === 'purchases' && purchases !== null) {
+            cachedPurchases = purchases;
+        }
+        if (source === 'notifications' && notifications !== null) {
+            cachedNotifications = notifications;
+        }
+
+        listArea.innerHTML = "";
+        
+        // Check if both are loaded
+        const hasPurchases = cachedPurchases.length > 0;
+        const hasNotifications = cachedNotifications.length > 0;
+        
+        // အကယ်၍ ဒေတာလုံးဝမရှိသေးရင်
+        if (!hasPurchases && !hasNotifications) {
+            listArea.innerHTML = "<div class='no-data'>📭 မှတ်တမ်းအသစ် မရှိသေးပါ Boss! 🛒</div>";            return;
+        }
+
+        // 📦 Purchases Section Title
+        if (hasPurchases) {
+            listArea.innerHTML += `<div class="section-title">🛒 ဝယ်ယူမှုမှတ်တမ်းများ</div>`;
+            cachedPurchases.forEach(item => {
+                listArea.innerHTML += createPurchaseCard(item);
+            });
+        }
+
+        // 🔔 Notifications Section Title
+        if (hasNotifications) {
+            listArea.innerHTML += `<div class="section-title">🔔 အကြောင်းကြားစာများ</div>`;
+            cachedNotifications.forEach(item => {
+                listArea.innerHTML += createNotificationCard(item);
+            });
+        }
+    }
+
+    // 📦 Purchase Card HTML Generator
+    function createPurchaseCard(d) {
+        // Timestamp handling for Supabase (ISO string)
+        let formattedDate = "Just now";
+        if (d.time) {
+            const dateObj = new Date(d.time);
+            if (!isNaN(dateObj.getTime())) {
+                formattedDate = dateObj.toLocaleString('en-GB', { 
+                    day: 'numeric', month: 'short', year: 'numeric', 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+            }
+        }
+
+        let statusText, statusClass;
+        const status = d.status || "pending";
+        if (status === "pending") {
+            statusText = "⏳ ဆောင်ရွက်နေဆဲ";
+            statusClass = "st-pending";
+        } else if (status === "success" || status === "completed") {
+            statusText = "✅ အောင်မြင်သည်";
+            statusClass = "st-success";
+        } else if (status === "rejected") {
+            statusText = "❌ လက်မခံပါ";
+            statusClass = "st-rejected";
+        } else {
+            statusText = status;
+            statusClass = "st-pending";
+        }
+        return `
+            <div class="history-card">
+                <span class="game-name">${d.game_name || d.gameName || 'Game Topup'}</span>
+                <div class="info-row">
+                    <span class="label">ဂိမ်း ID/Username:</span>
+                    <span class="value">${d.player_id || d.playerID || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">အမျိုးအစား:</span>
+                    <span class="value">${d.item_name || d.itemName || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">ကျသင့်ငွေ:</span>
+                    <span class="value">${d.price ? d.price.toLocaleString() : '0'} Ks</span>
+                </div>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+                <span class="date-text">🕙 ${formattedDate}</span>
+            </div>
+        `;
+    }
+
+    // 🔔 Notification Card HTML Generator
+    function createNotificationCard(n) {
+        // Timestamp handling for Supabase (ISO string)
+        let formattedTime = "";
+        if (n.time) {
+            const dateObj = new Date(n.time);
+            if (!isNaN(dateObj.getTime())) {
+                formattedTime = dateObj.toLocaleString('en-GB', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+            }
+        }
+
+        let icon = "🔔", colorClass = "notif-msg";
+        const type = n.type || "admin_msg";
+        if (type === "admin_reject") { icon = "❌"; colorClass = "notif-reject"; }
+        else if (type === "admin_success") { icon = "✅"; colorClass = "notif-success"; }
+        else if (type === "balance_topup") { icon = "💰"; colorClass = "notif-topup"; }
+        else if (type === "admin_msg") { icon = "💬"; colorClass = "notif-msg"; }
+
+        return `
+            <div class="notif-card ${colorClass}">
+                <div class="notif-text">${icon} ${n.text}</div>
+                <div class="notif-time">🕙 ${formattedTime}</div>
+            </div>
+        `;
+    }
+
+    // 🔄 Pull to Refresh    let startY = 0;
+    document.addEventListener('touchstart', e => { startY = e.touches[0].pageY; }, { passive: true });
+    document.addEventListener('touchend', e => {
+        if (e.changedTouches[0].pageY - startY > 100 && window.scrollY === 0 && currentUser) {
+            listArea.innerHTML = '<div class="loading">Refreshing... 🔄</div>';
+            fetchPurchases(currentUser.id);
+            fetchNotifications(currentUser.id);
+        }
+    }, { passive: true });
+
+    // 🧹 Cleanup on page hide/unload
+    function cleanup() {
+        if (purchasesChannel) {
+            supabase.removeChannel(purchasesChannel);
+        }
+        if (notificationsChannel) {
+            supabase.removeChannel(notificationsChannel);
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cleanup();
+    });
+
+    window.addEventListener('beforeunload', cleanup);
+</script>
+
+</body>
+</html>

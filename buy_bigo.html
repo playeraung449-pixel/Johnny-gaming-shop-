@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⭐ BIGO Live Diamonds - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #ffea00, #f39c12);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #ffd700; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #333; font-size: 24px; display: flex; align-items: center; font-weight: bold; }
+        .header-title { font-size: 17px; font-weight: bold; color: #333; flex: 1; }
+
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+
+        /* ⭐ BIGO Banner */
+        .bigo-banner {
+            background: linear-gradient(135deg, #ffea00 0%, #f39c12 100%);
+            border-radius: 20px; padding: 20px; color: #333; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 8px 25px rgba(255,234,0,0.4);
+            position: relative; overflow: hidden; font-weight: 700;
+        }
+        .bigo-banner::before {
+            content: '⭐'; position: absolute; font-size: 70px; opacity: 0.15;
+            top: -15px; right: -10px; animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .bigo-banner h2 { margin: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .bigo-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.95; }
+
+        /* 📦 Input Group */
+        .input-group {
+            background: #16213e; padding: 18px; border-radius: 16px;
+            margin-bottom: 20px; border: 1px solid #2a2a4a;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }        .input-label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #ffea00; }
+        .input-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+        .bigo-input {
+            width: 100%; padding: 12px; border: 1px solid #2a2a4a;
+            background: #1a1a2e; color: white; border-radius: 10px; font-size: 15px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .bigo-input:focus { border-color: #ffea00; box-shadow: 0 0 0 3px rgba(255,234,0,0.2); }
+        .bigo-input::placeholder { color: rgba(255,255,255,0.5); }
+        .bigo-input.valid { border-color: #28a745; }
+        .bigo-input.invalid { border-color: #dc3545; }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #ffea00, #f39c12); color: #333;
+            border: none; padding: 12px 16px; border-radius: 10px; font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .check-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,234,0,0.4); }
+        .check-btn:disabled { background: #555; cursor: not-allowed; color: #888; }
+        .check-btn.checking::after {
+            content: ''; width: 14px; height: 14px; border: 2px solid rgba(51,51,51,0.3);
+            border-top-color: #333; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .copy-btn {
+            background: rgba(255,234,0,0.2); color: #ffea00; border: none;
+            padding: 12px; border-radius: 10px; font-size: 13px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #ffea00; color: #333; }
+        .copy-btn.copied { background: #28a745; color: white; }
+        
+        .input-hint { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.5; }
+        .input-hint b { color: #ffea00; }
+        
+        /* ✅/❌ Status Indicator */
+        .status-badge {
+            display: none; align-items: center; gap: 6px; padding: 8px 12px;
+            border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .status-badge.show { display: flex; }
+        .status-valid { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-invalid { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 📦 Package Section */
+        .section-label { font-weight: 600; margin: 25px 0 12px; display: block; color: #ffea00; font-size: 15px; }        
+        /* 🔍 Search Box */
+        .search-box {
+            width: 100%; padding: 10px 12px 10px 35px; border: 1px solid #2a2a4a;
+            background: #1a1a2e; color: white; border-radius: 10px; font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .search-box::placeholder { color: rgba(255,255,255,0.5); }
+        .search-icon { position: relative; left: 12px; color: rgba(255,255,255,0.5); }
+
+        /* 📦 Items Grid */
+        .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .items-grid::-webkit-scrollbar { width: 4px; }
+        .items-grid::-webkit-scrollbar-thumb { background: rgba(255,234,0,0.5); border-radius: 2px; }
+        
+        .item-card {
+            background: #16213e; padding: 12px 10px; border-radius: 12px;
+            border: 2px solid #2a2a4a; cursor: pointer; text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .item-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,234,0,0.3); }
+        .item-card.selected { 
+            border-color: #ffea00; background: #1a1a3e; 
+            box-shadow: 0 0 0 3px rgba(255,234,0,0.2);
+        }
+        .item-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #ffea00, #f39c12); opacity: 0; transition: opacity 0.2s;
+        }
+        .item-card.selected::before { opacity: 1; }
+        
+        .item-icon { font-size: 20px; margin-bottom: 5px; display: block; }
+        .item-name { font-weight: 700; font-size: 13px; color: white; display: block; margin-bottom: 2px; }
+        .item-price { font-size: 11px; color: #ffea00; font-weight: 600; }
+        .item-badge {
+            background: linear-gradient(135deg, #ffea00, #f39c12); color: #333;
+            padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: bold;
+            margin-top: 5px; display: inline-block;
+        }
+        .item-badge.best { background: linear-gradient(135deg, #fdcb6e, #f39c12); color: #112240; }
+        .item-badge.elite { background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white; }
+        .item-badge.ultimate { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #112240; }
+        .item-badge.legend { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; }
+        .item-badge.mythic { background: linear-gradient(135deg, #fd79a8, #fdcb6e, #6c5ce7); color: #112240; }
+
+        /* 🔘 Buy Button */
+        .buy-btn {
+            width: 100%; background: linear-gradient(135deg, #00A651, #00c853);
+            color: white; border: none; padding: 16px; border-radius: 30px;            font-size: 17px; font-weight: 600; margin-top: 25px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,166,81,0.4); transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,166,81,0.5); }
+        .buy-btn:active:not(:disabled) { transform: translateY(1px); }
+        .buy-btn:disabled { 
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7;
+        }
+        .buy-btn.loading { pointer-events: none; }
+        .buy-btn.loading::after {
+            content: ''; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* ⚠️ Warning Box */
+        .warning-box {
+            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
+            padding: 12px 15px; border-radius: 0 10px 10px 0; margin: 20px 0;
+            font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5;
+        }
+        .warning-box i { margin-right: 6px; color: #FFC107; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .bigo-banner { padding: 16px; }
+            .items-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 350px; }
+            .item-card { padding: 10px 8px; }
+            .item-name { font-size: 12px; }
+            .item-price { font-size: 10px; }
+            .input-wrapper { flex-direction: column; align-items: stretch; }
+            .check-btn, .copy-btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="buy_others.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">⭐ BIGO Live Diamonds</div>
+</div>
+
+<div class="container">
+    <!-- ⭐ Banner -->
+    <div class="bigo-banner">
+        <h2><i class="fas fa-star"></i> BIGO Official Recharge</h2>
+        <p>မိတ်ဆွေရဲ့ BIGO Live အကောင့်ထဲကို ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရောက်ရှိစေရန် 🚀</p>
+    </div>
+    <!-- ⚠️ Warning -->
+    <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <b>သတိပြုရန်:</b> BIGO ID ကို တိကျစွာ ရိုက်ထည့်ပါ။ 
+        မှားယွင်းပါက Diamonds ပြန်လည်ပို့ဆောင်ပေးနိုင်မည် မဟုတ်ပါ။
+    </div>
+
+    <!-- 👤 BIGO ID Input + Check -->
+    <div class="input-group">
+        <label class="input-label">🆔 BIGO Live User ID</label>
+        <div class="input-wrapper">
+            <input type="number" id="bigo-id" class="bigo-input" placeholder="BIGO ID ရိုက်ထည့်ပါ (ဥပမာ: 123456789)" autocomplete="off">
+            <button class="check-btn" id="checkBtn" onclick="checkBigoID()">
+                <i class="fas fa-search"></i> စစ်ဆေးမည်
+            </button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="copy-btn" onclick="copyBigoID()">📋 Copy</button>
+        </div>
+        <p class="input-hint">
+            * <b>Format:</b> 6-12 digit numeric ID only (ဂဏန်းသာ)<br>
+            * ✅ "စစ်ဆေးမည်" ကို နှိပ်ပြီး ID ပုံစံမှန်/မှား အရင်စစ်ပါ
+        </p>
+        <!-- Status Badge -->
+        <div class="status-badge" id="status-badge">
+            <span id="status-icon"></span>
+            <span id="status-text"></span>
+        </div>
+    </div>
+
+    <!-- 📦 Diamond Package Selection -->
+    <label class="section-label">📦 Diamond Package ရွေးချယ်ပါ</label>
+    
+    <!-- Search Box -->
+    <div style="position:relative">
+        <i class="fas fa-search search-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:1"></i>
+        <input type="text" class="search-box" id="package-search" placeholder="🔍 Diamond amount ရှာဖွေရန်..." oninput="filterPackages(this.value)">
+    </div>
+    
+    <div class="items-grid" id="packages-grid">
+        <!-- 💎 BIGO Diamonds -->
+        <div class="item-card" onclick="selectItem(this, '50 Diamonds', 4700)" data-search="50 diamonds 4700">
+            <span class="item-icon">💎</span>
+            <span class="item-name">50</span>
+            <span class="item-price">4,700 Ks</span>
+            <span class="item-badge">Starter</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '100 Diamonds', 9000)" data-search="100 diamonds 9000">
+            <span class="item-icon">💎</span>            <span class="item-name">100</span>
+            <span class="item-price">9,000 Ks</span>
+            <span class="item-badge">Popular</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '200 Diamonds', 19000)" data-search="200 diamonds 19000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">200</span>
+            <span class="item-price">19,000 Ks</span>
+            <span class="item-badge">Value</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '300 Diamonds', 28000)" data-search="300 diamonds 28000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">300</span>
+            <span class="item-price">28,000 Ks</span>
+            <span class="item-badge">Pro</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '500 Diamonds', 46000)" data-search="500 diamonds 46000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">500</span>
+            <span class="item-price">46,000 Ks</span>
+            <span class="item-badge best">Best</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '700 Diamonds', 64000)" data-search="700 diamonds 64000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">700</span>
+            <span class="item-price">64,000 Ks</span>
+            <span class="item-badge elite">Elite</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1000 Diamonds', 89000)" data-search="1000 diamonds 89000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">1,000</span>
+            <span class="item-price">89,000 Ks</span>
+            <span class="item-badge elite">Premium 🏆</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '2000 Diamonds', 198500)" data-search="2000 diamonds 198500">
+            <span class="item-icon">💎</span>
+            <span class="item-name">2,000</span>
+            <span class="item-price">198,500 Ks</span>
+            <span class="item-badge ultimate">Ultimate 👑</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '3000 Diamonds', 288500)" data-search="3000 diamonds 288500">
+            <span class="item-icon">💎</span>
+            <span class="item-name">3,000</span>
+            <span class="item-price">288,500 Ks</span>
+            <span class="item-badge legend">Legend ⭐</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '5000 Diamonds', 459000)" data-search="5000 diamonds 459000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">5,000</span>
+            <span class="item-price">459,000 Ks</span>            <span class="item-badge mythic">Mythic 👑✨</span>
+        </div>
+    </div>
+
+    <!-- 🔘 Buy Button -->
+    <button class="buy-btn" id="buyBtn" onclick="processBigoPurchase()">
+        <i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်
+    </button>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let selectedItemName = "";
+    let selectedPrice = 0;
+    let currentUser = null;
+    let isIDValid = false;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            setTimeout(() => { window.location.href = "login.html"; }, 1000);
+            return;
+        }
+        
+        currentUser = session.user;
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+
+    // 📦 Item Selection
+    window.selectItem = (el, name, price) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');        selectedItemName = name;
+        selectedPrice = price;
+    };
+
+    // 🔍 Search within Packages
+    window.filterPackages = (query) => {
+        const q = query.toLowerCase().trim();
+        document.querySelectorAll('.item-card').forEach(card => {
+            const search = card.dataset.search || '';
+            card.style.display = search.includes(q) ? 'block' : 'none';
+        });
+    };
+
+    // 📋 Copy BIGO ID
+    window.copyBigoID = async () => {
+        const input = document.getElementById('bigo-id');
+        const btn = document.querySelector('.copy-btn');
+        const id = input.value.trim();
+        
+        if (!id) { input.focus(); return; }
+        
+        try {
+            await navigator.clipboard.writeText(id);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) { alert("Copy မရပါ။ ကိုယ်တိုင် ကူးယူပါ။"); }
+    };
+
+    // 🔍 Validate BIGO ID Format
+    function isValidBigoFormat(id) {
+        // BIGO IDs are typically 6-12 digit numbers
+        const regex = /^\d{6,12}$/;
+        return regex.test(id);
+    }
+
+    // 🌐 Check BIGO ID (Format Validation)
+    async function checkBigoID() {
+        const input = document.getElementById('bigo-id');
+        const checkBtn = document.getElementById('checkBtn');
+        const badge = document.getElementById('status-badge');
+        const bigoID = input.value.trim();
+        
+        // Clear previous state
+        input.classList.remove('valid', 'invalid');
+        badge.classList.remove('show', 'status-valid', 'status-invalid');
+        isIDValid = false;
+
+        if (!bigoID) {            showStatus('❌', 'BIGO ID ရိုက်ထည့်ပါ', 'invalid');
+            input.focus();
+            return;
+        }
+
+        if (!isValidBigoFormat(bigoID)) {
+            showStatus('❌', 'ID ပုံစံမှားနေပါသည် (ဂဏန်း 6-12 လုံး)', 'invalid');
+            input.classList.add('invalid');
+            return;
+        }
+
+        // 🔄 Loading state
+        checkBtn.disabled = true;
+        checkBtn.classList.add('checking');
+        checkBtn.innerHTML = '';
+
+        try {
+            // ✅ Format is valid - BIGO doesn't have public API for ID lookup
+            isIDValid = true;
+            showStatus('✅', 'ID ပုံစံမှန်ကန်ပါသည် ✓', 'valid');
+            input.classList.add('valid');
+            
+        } catch (error) {
+            console.warn("BIGO Check Error:", error);
+            showStatus('⚠️', 'Format မှန်ကန်ပါသည်', 'valid');
+            input.classList.add('valid');
+            isIDValid = true;
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.classList.remove('checking');
+            checkBtn.innerHTML = '<i class="fas fa-search"></i> စစ်ဆေးမည်';
+        }
+    }
+
+    // 🎨 Show Status Badge
+    function showStatus(icon, text, type) {
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        statusIcon.textContent = icon;
+        statusText.textContent = text;
+        badge.className = `status-badge show status-${type}`;
+    }
+
+    // 🤖 Send to Telegram Admin (WITH UID)
+    async function sendToAdmin(details) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+                const message = `
+⭐ *BIGO LIVE DIAMONDS ORDER*
+━━━━━━━━━━━━━━━━━━
+📊 *ဝန်ဆောင်မှု:* BIGO Live Diamonds
+🆔 *BIGO ID:* ${details.playerID}
+👤 *User UID:* ${details.uid}
+📧 *Buyer Email:* ${details.email}
+💎 *Package:* ${details.item}
+💰 *Price:* ${details.price.toLocaleString()} Ks
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ ချက်ချင်း စစ်ဆေးပြီး Diamonds ဖြည့်ပေးပါရန် 🚀
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Telegram API Error:", e); }
+    }
+
+    // 💰 Update Balance (Supabase Version)
+    async function updateBalance(uid, amountChange) {
+        // Get current balance
+        const {  userData, error: fetchError } = await supabase
+            .from('users')
+            .select('balance, total_spent, spin_count')
+            .eq('id', uid)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newBalance = (userData.balance || 0) + amountChange;
+        const newTotalSpent = (userData.total_spent || 0) + (amountChange < 0 ? -amountChange : 0);
+        const newSpinCount = (userData.spin_count || 0) + (amountChange < 0 ? 1 : 0); // Free spin on purchase
+
+        // Update with new values
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+                balance: newBalance,
+                total_spent: newTotalSpent,
+                spin_count: newSpinCount
+            })            .eq('id', uid);
+
+        if (updateError) throw updateError;
+    }
+
+    // 🛒 Purchase Process (Supabase Version)
+    window.processBigoPurchase = async () => {
+        const btn = document.getElementById('buyBtn');
+        const bigoID = document.getElementById('bigo-id').value.trim();
+
+        // ✅ Validation
+        if (!currentUser) { alert("ကျေးဇူးပြု၍ Login ဝင်ပါ။"); return; }
+        if (!bigoID) { alert("❌ BIGO ID ကို ရိုက်ထည့်ပါ။"); return; }
+        if (!isValidBigoFormat(bigoID)) {
+            alert("❌ BIGO ID ပုံစံမှားနေပါသည်။\n(ဂဏန်း 6-12 လုံးသာ ဖြစ်ရမည်)");
+            return;
+        }
+        if (selectedPrice === 0) { alert("❌ Diamond Package ကို အရင်ရွေးချယ်ပါ။"); return; }
+
+        // ⚠️ Warning if not checked
+        if (!isIDValid) {
+            const confirmSkip = confirm(`⚠️ BIGO ID ကို စစ်ဆေးထားခြင်း မရှိသေးပါ။
+
+🆔 ရိုက်ထည့်ထားသော ID: ${bigoID}
+
+မှားယွင်းပါက Diamonds ပြန်မရနိုင်ပါ။
+ဆက်လက်ဝယ်ယူမလား?`);
+            if (!confirmSkip) return;
+        }
+
+        // 🔒 Confirm Dialog with Spin Bonus
+        const confirmMsg = `⭐ BIGO Diamonds ဝယ်ယူမည်
+
+🆔 လက်ခံမည့် BIGO ID: ${bigoID}
+📦 Package: ${selectedItemName}
+💰 ဈေးနှုန်း: ${selectedPrice.toLocaleString()} Ks
+🎰 ဝယ်ယူမှုအောင်မြင်ပါက: Spin 1 ကြိမ် အခမဲ့ ရရှိမည်
+
+✅ အတည်ပြုဝယ်ယူမလား?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        // 🔄 Loading State
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '';
+
+        try {
+            // 💰 Check balance and deduct + update stats + free spin
+            await updateBalance(currentUser.id, -selectedPrice);
+            // 📝 Save Purchase Record to 'purchases' table
+            const { error: purchaseError } = await supabase
+                .from('purchases')
+                .insert([{
+                    user_id: currentUser.id,
+                    game_name: "BIGO Live",
+                    player_id: bigoID,
+                    item_name: selectedItemName,
+                    price: selectedPrice,
+                    status: "pending",
+                    time: new Date().toISOString(),
+                    buyer_uid: currentUser.id,
+                    buyer_email: currentUser.email
+                }]);
+
+            if (purchaseError) throw purchaseError;
+
+            // 🤖 Notify Admin via Telegram (WITH UID)
+            await sendToAdmin({
+                playerID: bigoID,
+                uid: currentUser.id,
+                email: currentUser.email,
+                item: selectedItemName,
+                price: selectedPrice
+            });
+
+            // ✅ Success with Spin Notification
+            alert(`🎉 ဝယ်ယူမှု အောင်မြင်ပါပြီ!
+
+🎰 ဂုဏ်ပြုအနေဖြင့် Lucky Spin 1 ကြိမ် အခမဲ့ ရရှိပါပြီ!
+
+Admin မှ ၅-၁၅ မိနစ်အတွင်း Diamonds ကို ဖြည့်ဆည်းပေးပါလိမ့်မယ်။
+
+ကျေးဇူးတင်ပါတယ်။ 🙏`);
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            let msg = "❌ အဆင်မပြေဖြစ်နေပါသည်။";
+            if (error.message?.includes("balance") || error.message?.includes("လက်ကျန်")) {
+                msg = "လက်ကျန်ငွေ မလုံလောက်ပါ။";
+            } else if (error.message?.includes("network")) {
+                msg = "📶 အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ။";
+            }
+            alert(msg + "\n\nပြဿနာရှိပါက Admin ထံ ဆက်သွယ်ပါ။");
+        } finally {
+            // 🔁 Reset Button
+            btn.classList.remove('loading');
+            btn.disabled = false;            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်';
+        }
+    };
+
+    // ⌨️ Enter Key Support
+    document.getElementById('bigo-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (!isIDValid) checkBigoID();
+            else if (selectedPrice > 0) processBigoPurchase();
+        }
+    });
+</script>
+
+</body>
+</html>

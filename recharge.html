@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💰 ငွေဖြည့်မည် - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Pyidaungsu', 'Segoe UI', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            min-height: 100vh; color: #fff; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 2px solid #00AEEF; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #00AEEF; font-size: 16px; }
+        .logo i { font-size: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .home-btn { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 10px; color: #fff; text-decoration: none; font-size: 18px; transition: background 0.2s; }
+        .home-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* 📦 Main Container */
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+
+        /* 🎁 Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 15px;
+            animation: slideDown 0.4s ease;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .welcome-icon { font-size: 32px; }
+        .welcome-text { font-size: 14px; line-height: 1.4; }
+        .welcome-text b { display: block; font-size: 15px; margin-bottom: 3px; }
+
+        /* ⚠️ Warning Cards */
+        .warning-section { margin-bottom: 25px; }
+        .section-title {
+            font-size: 16px; font-weight: bold; color: #00AEEF;            margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title i { font-size: 14px; }
+
+        .warning-card {
+            background: rgba(255,255,255,0.08); border-radius: 14px;
+            padding: 15px; margin-bottom: 10px; border-left: 4px solid #00AEEF;
+            transition: all 0.25s; cursor: pointer;
+        }
+        .warning-card:hover { background: rgba(255,255,255,0.12); transform: translateX(3px); }
+        .warning-card.critical { border-left-color: #dc3545; background: rgba(220,53,69,0.15); }
+        .warning-card.important { border-left-color: #ffc107; background: rgba(255,193,7,0.15); }
+        .warning-card.info { border-left-color: #17a2b8; background: rgba(23,162,184,0.15); }
+
+        .warning-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .warning-title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+        .warning-badge {
+            padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        .badge-critical { background: rgba(220,53,69,0.3); color: #ff6b6b; border: 1px solid #dc3545; }
+        .badge-important { background: rgba(255,193,7,0.3); color: #ffc107; border: 1px solid #ffc107; }
+        .badge-info { background: rgba(23,162,184,0.3); color: #17a2b8; border: 1px solid #17a2b8; }
+
+        .warning-content { font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5; }
+        .warning-content.highlight { color: #ffc107; font-weight: 500; }
+        .warning-content.danger { color: #ff6b6b; font-weight: 600; }
+
+        .warning-toggle { color: rgba(255,255,255,0.6); font-size: 12px; transition: transform 0.2s; }
+        .warning-card.expanded .warning-toggle { transform: rotate(180deg); }
+        .warning-details {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            margin-top: 0; padding-top: 0; font-size: 12px; color: rgba(255,255,255,0.7);
+        }
+        .warning-card.expanded .warning-details { max-height: 200px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); }
+
+        /* ✅ Confirmation Section */
+        .confirm-section {
+            background: rgba(40,167,69,0.15); border: 2px solid #28a745;
+            border-radius: 16px; padding: 20px; margin: 25px 0;
+            text-align: center;
+        }
+        .confirm-title { font-weight: bold; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .confirm-checkbox {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 15px;
+        }
+        .confirm-checkbox input { width: 18px; height: 18px; accent-color: #28a745; }
+
+        /* 🔘 Progressive Button */        .btn-container { padding: 0 15px; }
+        .btn-proceed {
+            width: 100%; background: linear-gradient(135deg, #28a745, #20c997);
+            color: white; border: none; padding: 16px; border-radius: 14px;
+            font-size: 17px; font-weight: 600; cursor: pointer;
+            transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 6px 20px rgba(40,167,69,0.4);
+        }
+        .btn-proceed:disabled {
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7;
+        }
+        .btn-proceed:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(40,167,69,0.5); }
+        .btn-proceed:not(:disabled):active { transform: translateY(1px); }
+        
+        .countdown { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 10px; }
+        .countdown.active { color: #28a745; font-weight: 600; animation: pulse 1s infinite; }
+
+        /* 🔔 Toast Notification */
+        .toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: white; color: #333; padding: 12px 20px; border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;
+            display: flex; align-items: center; gap: 10px; max-width: 90%; text-align: left;
+            transition: transform 0.3s ease; border-left: 4px solid #00AEEF;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-left-color: #28a745; }
+        .toast.warning { border-left-color: #ffc107; }
+        .toast.error { border-left-color: #dc3545; }
+        .toast i { font-size: 18px; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            .warning-card { padding: 13px; }
+            .warning-title { font-size: 13px; }
+            .warning-content { font-size: 12px; }
+            .btn-proceed { padding: 14px; font-size: 16px; }
+        }
+
+        /* 🌓 Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            body { background: linear-gradient(180deg, #0a0a1a, #1a1a2e); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🎮 Header -->
+<div class="header">    <div class="logo"><i class="fas fa-gamepad"></i> JOHNNY SHOP</div>
+    <a href="index.html" class="home-btn" title="Home"><i class="fas fa-home"></i></a>
+</div>
+
+<div class="container">
+    <!-- 🎁 Welcome Banner -->
+    <div class="welcome-banner">
+        <div class="welcome-icon">💰</div>
+        <div class="welcome-text">
+            <b>ငွေဖြည့်မည့်သူများအတွက် အရေးကြီးအချက်များ</b>
+            <span>အောက်ပါစည်းကမ်းများကို ဖတ်ရှုနားလည်ပြီးမှ ဆက်လက်ဆောင်ရွက်ပါ။</span>
+        </div>
+    </div>
+
+    <!-- ⚠️ Critical Warnings -->
+    <div class="warning-section">
+        <div class="section-title"><i class="fas fa-exclamation-triangle"></i> 🔴 အထူးသတိပေးချက်များ</div>
+        
+        <div class="warning-card critical" onclick="toggleWarning(this)">
+            <div class="warning-header">
+                <div class="warning-title"><i class="fas fa-ban"></i> ငွေအတု/ပုံအတု မလွှဲပါရန်</div>
+                <span class="warning-badge badge-critical">အရေးကြီး</span>
+            </div>
+            <div class="warning-content danger">ငွေလွှဲပုံအတု (Fake Screenshot) ဖြင့် လိမ်လည်ဝယ်ယူပါက အကောင့်အပြီးတိုင် ပိတ်သိမ်း (Ban) ခံရမည်။</div>
+            <span class="warning-toggle"><i class="fas fa-chevron-down"></i></span>
+            <div class="warning-details">
+                • Fake screenshot များကို Admin မှ စနစ်တကျ စစ်ဆေးပါသည်။<br>
+                • မိမိလွှဲလိုက်သော ငွေပမာဏနှင့် ပုံတွင်ပါသော ပမာဏ ကိုက်ညီမှုရှိရပါမည်။<br>
+                • ငွေအတုဖြင့် လိမ်လည်မှုပြုလုပ်ပါက ဥပဒေအရ အရေးယူခံရနိုင်ပါသည်။
+            </div>
+        </div>
+
+        <div class="warning-card critical" onclick="toggleWarning(this)">
+            <div class="warning-header">
+                <div class="warning-title"><i class="fas fa-phone-alt"></i> ဖုန်းနံပါတ် အတည်ပြုပါ</div>
+                <span class="warning-badge badge-critical">မဖြစ်မနေ</span>
+            </div>
+            <div class="warning-content highlight">ဖုန်းနံပါတ် အပြောင်းအလဲရှိနိုင်သဖြင့် App ထဲရှိ နံပါတ်ကို <b>Copy ယူပြီးမှသာ</b> လွှဲပါ။</div>
+            <span class="warning-toggle"><i class="fas fa-chevron-down"></i></span>
+            <div class="warning-details">
+                • မှားယွင်းစွာ လွှဲမိပါက JOHNNY GAMING SHOP မှ <b>တာဝန်မယူပါ</b>။<br>
+                • လွှဲပြီးပါက Screenshot ကို ရှင်းလင်းစွာ ရိုက်ကူးပြီး တင်ပေးပါ။<br>
+                • နံပါတ်မသေချာပါက Admin ထံ အရင်ဆုံး ဆက်သွယ်အတည်ပြုပါ။
+            </div>
+        </div>
+    </div>
+
+    <!-- ⏰ Processing Info -->
+    <div class="warning-section">
+        <div class="section-title"><i class="fas fa-clock"></i> 🕒 ငွေဖြည့်ချိန်နှင့် စီစဉ်ချက်များ</div>        
+        <div class="warning-card info" onclick="toggleWarning(this)">
+            <div class="warning-header">
+                <div class="warning-title"><i class="fas fa-business-time"></i> ငွေဖြည့်ချိန်ဇယား</div>
+                <span class="warning-badge badge-info">အချိန်ဇယား</span>
+            </div>
+            <div class="warning-content">မနက် <b>8:30 AM</b> မှ ည <b>10:00 PM</b> အတွင်း ငွေဖြည့်ပါက ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရရှိမည်။</div>
+            <span class="warning-toggle"><i class="fas fa-chevron-down"></i></span>
+            <div class="warning-details">
+                • ည 10:00 PM နောက်ပိုင်း ငွေဖြည့်ပါက နောက်တစ်နေ့ မနက်တွင် စစ်ဆေးဖြည့်ဆည်းပေးပါမည်။<br>
+                • ပွဲတော်ရက်များတွင် အော်ဒါများပါက စောင့်ဆိုင်းချိန် အနည်းငယ် ပိုကြာနိုင်ပါသည်။
+            </div>
+        </div>
+
+        <div class="warning-card info" onclick="toggleWarning(this)">
+            <div class="warning-header">
+                <div class="warning-title"><i class="fas fa-check-circle"></i> စစ်ဆေးပြီးနောက်</div>
+                <span class="warning-badge badge-info">အဆင့်ဆင့်</span>
+            </div>
+            <div class="warning-content">ငွေလွှဲပြီးပါက Admin မှ စစ်ဆေးပြီး <b>5 မိနစ်</b> အတွင်း လက်ကျန်ငွေ ဖြည့်ဆည်းပေးပါမည်။</div>
+            <span class="warning-toggle"><i class="fas fa-chevron-down"></i></span>
+            <div class="warning-details">
+                • စစ်ဆေးပြီးပါက "အောင်မြင်သည်" ဆိုသော အကြောင်းကြားစာ ရောက်ရှိပါမည်။<br>
+                • လက်ကျန်ငွေ ဝင်ရောက်ပါက မိမိစိတ်ကြိုက် ဂိမ်းပစ္စည်းများ ဝယ်ယူနိုင်ပါပြီ။<br>
+                • ဝယ်ယူပြီးပါက ပစ္စည်းသည် ၁၅ မိနစ်အတွင်း ဂိမ်းအကောင့်ထဲ ရောက်ရှိပါမည်။
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Confirmation Section -->
+    <div class="confirm-section">
+        <div class="confirm-title"><i class="fas fa-shield-alt"></i> ကျွန်ုပ် နားလည်ပါသည်</div>
+        <label class="confirm-checkbox">
+            <input type="checkbox" id="agree-check" onchange="updateButton()">
+            <span>အထက်ပါ စည်းကမ်းချက်များကို ဖတ်ရှုနားလည်ပြီး ကျွန်ုပ် တာဝန်ယူပါသည်။</span>
+        </label>
+    </div>
+
+    <!-- 🔘 Progressive Button -->
+    <div class="btn-container">
+        <button class="btn-proceed" id="proceed-btn" onclick="goToWallet()" disabled>
+            <i class="fas fa-wallet"></i> ငွေဖြည့်ရန် နှိပ်ပါ
+        </button>
+        <div class="countdown" id="countdown"></div>
+    </div>
+</div>
+
+<!-- 🔔 Toast Notification -->
+<div class="toast" id="toast">
+    <i class="fas fa-info-circle" id="toast-icon"></i>    <span id="toast-msg"></span>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // 2️⃣ Auth Check - User Login ရှိ/မရှိ စစ်ဆေးခြင်း
+    async function checkAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            showToast('🔐 ကျေးဇူးပြု၍ Login ဝင်ရောက်ပါ။', 'warning', 3000);
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        }
+    }
+    checkAuth();
+
+    // 🔄 Toggle Warning Card Expand/Collapse
+    function toggleWarning(card) {
+        card.classList.toggle('expanded');
+    }
+
+    // ✅ Update Button State based on Checkbox
+    function updateButton() {
+        const checkbox = document.getElementById('agree-check');
+        const btn = document.getElementById('proceed-btn');
+        const countdown = document.getElementById('countdown');
+        
+        if (checkbox.checked) {
+            btn.disabled = false;
+            countdown.innerHTML = '<i class="fas fa-check"></i> ဆက်လက်ဆောင်ရွက်နိုင်ပါပြီ ✅';
+            countdown.classList.add('active');
+            showToast('✅ ကျေးဇူးတင်ပါတယ်! ငွေဖြည့်စာမျက်နှာသို့ ဦးတည်နေပါပြီ။', 'success', 2000);
+        } else {
+            btn.disabled = true;
+            countdown.innerHTML = 'စည်းကမ်းချက်များကို ဖတ်ရှုနားလည်ပါက အထက်တွင် အမှန်ခြစ်ပေးပါ';
+            countdown.classList.remove('active');
+        }
+    }
+
+    // 🎨 Show Toast Notification
+    function showToast(message, type = 'info', duration = 3000) {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toast-icon');
+        const msg = document.getElementById('toast-msg');
+                msg.textContent = message;
+        toast.className = `toast ${type} show`;
+        
+        if (type === 'success') icon.className = 'fas fa-check-circle';
+        else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
+        else if (type === 'error') icon.className = 'fas fa-exclamation-circle';
+        else icon.className = 'fas fa-info-circle';
+        
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // 🚀 Navigate to Payment Page
+    function goToWallet() {
+        const checkbox = document.getElementById('agree-check');
+        
+        if (!checkbox.checked) {
+            showToast('⚠️ ကျေးဇူးပြု၍ စည်းကမ်းချက်များကို အရင်ဖတ်ရှုပေးပါ။', 'warning');
+            return;
+        }
+
+        // Double check auth before redirect
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                showToast('🔐 Session ကုန်ဆုံးသွားပါပြီ။ Login ပြန်ဝင်ပါ။', 'error');
+                setTimeout(() => window.location.href = 'login.html', 1500);
+                return;
+            }
+
+            showToast('🚀 ငွေဖြည့်စာမျက်နှာသို့ ဦးတည်နေပါပြီ...', 'success', 1500);
+            
+            // Smooth redirect with slight delay for UX
+            setTimeout(() => {
+                window.location.href = "payment_methods.html";
+            }, 1200);
+        });
+    }
+
+    // ⌨️ Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === ' ' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            const checkbox = document.getElementById('agree-check');
+            checkbox.checked = !checkbox.checked;
+            updateButton();
+        }
+        if (e.key === 'Enter' && !document.getElementById('proceed-btn').disabled) {
+            goToWallet();
+        }
+    });
+    // 📱 Touch Feedback for Cards
+    document.querySelectorAll('.warning-card').forEach(card => {
+        card.addEventListener('touchstart', function() {
+            this.style.transform = 'translateX(5px)';
+        });
+        card.addEventListener('touchend', function() {
+            this.style.transform = '';
+        });
+    });
+
+    // 🎉 Welcome Animation on Load
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            showToast('👋 ကြိုဆိုပါတယ်! ငွေဖြည့်မည့် စည်းကမ်းချက်များကို ဖတ်ရှုပေးပါ။', 'info', 4000);
+        }, 1000);
+    });
+</script>
+
+</body>
+</html>

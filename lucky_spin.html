@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Spin - Johnny Gaming Shop</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #00AEEF 0%, #0072BC 100%);
+            min-height: 100vh; text-align: center; color: white;
+            overflow-x: hidden;
+        }
+        .header { 
+            background: white; padding: 15px 20px; 
+            display: flex; align-items: center; gap: 15px; color: #333;
+            position: sticky; top: 0; z-index: 50;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-btn { text-decoration: none; color: #0072BC; font-size: 24px; font-weight: bold; }
+
+        /* 🎡 Wheel Container */
+        .wheel-wrapper { 
+            position: relative; 
+            width: min(320px, 90vw); 
+            height: min(320px, 90vw); 
+            margin: 30px auto; 
+        }
+        #wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 6px solid white; 
+            position: relative; 
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .pointer {
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            width: 50px; height: 50px; 
+            background: linear-gradient(135deg, #FFD700, #FFA500); 
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+            z-index: 20;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        .pointer::after {
+            content: ''; position: absolute; top: 20px; left: 50%; transform: translateX(-50%);            width: 12px; height: 12px; background: #333; border-radius: 50%;
+        }
+        /* 🎮 Spin Button */
+        .spin-btn {
+            background: linear-gradient(135deg, #FFD700, #FFA500); 
+            color: #333; border: none; padding: 16px 50px;
+            font-size: 18px; font-weight: bold; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3); margin: 15px 0;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .spin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        .spin-btn:active:not(:disabled) { transform: translateY(1px); }
+        .spin-btn:disabled { 
+            background: #ccc; cursor: not-allowed; 
+            box-shadow: none; transform: none;
+        }
+        .spin-btn.spinning { 
+            background: linear-gradient(135deg, #aaa, #888); 
+            color: #666;
+        }
+
+        /* 📊 Info Display */
+        .info-box { 
+            margin: 15px auto; padding: 12px 20px; 
+            background: rgba(255,255,255,0.15); 
+            border-radius: 15px; display: inline-block;
+            backdrop-filter: blur(5px);
+        }
+        .spin-count { font-size: 24px; font-weight: bold; color: #FFD700; }
+        .info-label { font-size: 14px; opacity: 0.9; }
+
+        /* 🎁 Result Modal */
+        #result-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); 
+            display: none; align-items: center; justify-content: center; 
+            z-index: 100; padding: 20px;
+        }
+        .modal-content { 
+            background: white; color: #333; padding: 25px; 
+            border-radius: 20px; width: 90%; max-width: 320px;
+            animation: modalPop 0.3s ease;
+            position: relative;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-title { 
+            font-size: 20px; font-weight: bold; margin-bottom: 10px;             color: #0072BC;
+        }
+        .modal-msg { font-size: 15px; line-height: 1.5; margin-bottom: 20px; color: #555; }
+        .modal-btn { 
+            width: 100%; padding: 12px; 
+            background: linear-gradient(135deg, #00AEEF, #0072BC); 
+            color: white; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+
+        /* ✨ Confetti Animation */
+        .confetti {
+            position: fixed; width: 10px; height: 10px;
+            background: #FFD700; animation: fall 3s linear forwards;
+            z-index: 99; pointer-events: none;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* 🎵 Visual Pulse for Big Win */
+        .big-win { animation: pulseWin 0.5s ease-in-out 3; }
+        @keyframes pulseWin {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px #FFD700; }
+        }
+
+        /* ⚠️ Warning Banner */
+        .warning-banner {
+            background: rgba(255,193,7,0.2); color: #fff;
+            padding: 8px 15px; font-size: 11px; margin: 10px;
+            border-radius: 8px; border: 1px solid rgba(255,193,7,0.5);
+        }
+
+        /* 📱 Mobile Optimizations */
+        @media (max-width: 480px) {
+            .spin-btn { padding: 14px 40px; font-size: 16px; }
+            .info-box { padding: 10px 15px; }
+            .modal-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">‹</a>
+    <b style="font-size: 18px;">🎰 Lucky Spin</b>
+</div>
+
+<div class="warning-banner">    ⚠️ ဆုကြီးများ (Starlight) အတွက် Admin ထံ ဆက်သွယ်ရန် လိုအပ်ပါသည်</div>
+
+<div class="wheel-wrapper">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="320" height="320"></canvas>
+</div>
+
+<button class="spin-btn" id="spinBtn" onclick="startSpin()">🎲 SPIN NOW</button>
+
+<div class="info-box">
+    <div class="info-label">လက်ကျန် Spin အကြိမ်ရေ</div>
+    <div class="spin-count" id="spin-count">0</div>
+</div>
+
+<div id="result-modal">
+    <div class="modal-content" id="modal-box">
+        <div class="modal-title" id="result-title">🎉 ဂုဏ်ယူပါတယ်!</div>
+        <p class="modal-msg" id="result-msg"></p>
+        <button class="modal-btn" onclick="closeModal()">အိုကေ ✅</button>
+    </div>
+</div>
+
+<!-- 🔊 Sound Effects (Optional) -->
+<audio id="spin-sound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-wheel-of-fortune-spin-2352.mp3" type="audio/mpeg">
+</audio>
+<audio id="win-sound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const spinSound = document.getElementById('spin-sound');
+    const winSound = document.getElementById('win-sound');
+
+    // 🎁 Prize Configuration - Cumulative Probability
+    const items = [
+        { label: "လျှော့ဈေး 10K", color: "#FF6B6B", cumProb: 15, value: "discount_10k" },
+        { label: "၅၀ ကျပ်", color: "#4ECDC4", cumProb: 45, value: "balance_50" },
+        { label: "ကျေးဇူးတင်ပါသည်", color: "#95A5A6", cumProb: 95, value: "thankyou" },
+        { label: "၂၀၀ ကျပ်", color: "#9B59B6", cumProb: 98, value: "balance_200" },
+        { label: "Free Spin ×2", color: "#F39C12", cumProb: 99.9, value: "spin_2" },
+        { label: "⭐ Starlight", color: "#FFD700", cumProb: 100, value: "starlight_1" }    ];
+
+    let currentSpinCount = 0;
+    let currentUser = null;
+    let isSpinning = false;
+    let userChannel = null;
+
+    // 🎨 Draw Wheel with Equal Visual Slices
+    function drawWheel() {
+        const radius = 150;
+        const centerX = 160, centerY = 160;
+        const sliceAngle = (2 * Math.PI) / items.length;
+
+        items.forEach((item, i) => {
+            const startAngle = i * sliceAngle;
+            const endAngle = (i + 1) * sliceAngle;
+
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = item.color;
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + sliceAngle / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "white";
+            ctx.font = "bold 11px 'Segoe UI', sans-serif";
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 3;
+            ctx.fillText(item.label, radius - 20, 4);
+            ctx.restore();
+        });
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.strokeStyle = "#0072BC";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.fillStyle = "#0072BC";
+        ctx.font = "bold 10px sans-serif";
+        ctx.textAlign = "center";        ctx.fillText("SPIN", centerX, centerY + 4);
+    }
+    drawWheel();
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            window.location.href = "login.html";
+            return;
+        }
+        
+        currentUser = session.user;
+        setupUserSync(currentUser.id);
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // 🔄 Setup Real-time Sync for User Data (spinCount, balance)
+    function setupUserSync(uid) {
+        // Initial fetch
+        fetchUserData(uid);
+        
+        // Setup realtime subscription for user updates
+        userChannel = supabase
+            .channel(`user:${uid}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'users',
+                filter: `id=eq.${uid}`
+            }, (payload) => {
+                const newData = payload.new;
+                currentSpinCount = newData.spinCount || 0;
+                updateSpinDisplay();
+            })
+            .subscribe();
+    }
+
+    // Fetch initial user data
+    async function fetchUserData(uid) {        try {
+            const {  userData, error } = await supabase
+                .from('users')
+                .select('spinCount, balance, role')
+                .eq('id', uid)
+                .single();
+
+            if (error) throw error;
+
+            if (userData) {
+                currentSpinCount = userData.spinCount || 0;
+                updateSpinDisplay();
+            }
+        } catch (error) {
+            console.error("User data fetch error:", error);
+        }
+    }
+
+    // Update spin count display and button state
+    function updateSpinDisplay() {
+        document.getElementById('spin-count').innerText = currentSpinCount;
+        spinBtn.disabled = currentSpinCount <= 0 || isSpinning;
+    }
+
+    // Initialize
+    initAuth();
+
+    // 🎲 Probability Selection (Cumulative)
+    function selectPrize() {
+        const rand = Math.random() * 100;
+        for (const item of items) {
+            if (rand < item.cumProb) return item;
+        }
+        return items[items.length - 1];
+    }
+
+    // 🎉 Confetti Effect for Big Wins
+    function createConfetti(count = 50) {
+        const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#9B59B6', '#F39C12'];
+        for (let i = 0; i < count; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 4000);
+        }    }
+
+    // 🎮 Start Spin
+    window.startSpin = async () => {
+        if (isSpinning || currentSpinCount <= 0) return;
+        
+        isSpinning = true;
+        spinBtn.classList.add('spinning');
+        spinBtn.disabled = true;
+        spinBtn.innerText = "🎡 Spinning...";
+
+        try { spinSound.currentTime = 0; spinSound.play().catch(()=>{}); } catch(e) {}
+
+        try {
+            const selected = selectPrize();
+            const selectedIndex = items.indexOf(selected);
+            
+            const sliceDeg = 360 / items.length;
+            const extraRotation = Math.floor(Math.random() * 360);
+            const totalRotation = 360 * 5 + (selectedIndex * sliceDeg) + extraRotation;
+            
+            canvas.style.transform = `rotate(-${totalRotation}deg)`;
+
+            // 💫 Deduct spin count immediately
+            await deductSpinCount(currentUser.id);
+
+            setTimeout(async () => {
+                await processPrize(selected);
+            }, 4200);
+
+        } catch (error) {
+            console.error("Spin error:", error);
+            alert("အဆင်မပြေဖြစ်နေပါသည်။ နောက်ထပ် ကြိုးစားကြည့်ပါ။");
+            resetSpin();
+        }
+    };
+
+    // 💫 Deduct Spin Count (Supabase Version)
+    async function deductSpinCount(uid) {
+        try {
+            // Get current spin count first
+            const {  userData, error: fetchError } = await supabase
+                .from('users')
+                .select('spinCount')
+                .eq('id', uid)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const newSpinCount = (userData.spinCount || 0) - 1;
+            // Update with new value
+            await supabase
+                .from('users')
+                .update({ spinCount: newSpinCount })
+                .eq('id', uid);
+
+            // Update local state
+            currentSpinCount = newSpinCount;
+            updateSpinDisplay();
+        } catch (error) {
+            console.error("Spin count deduction error:", error);
+            throw error;
+        }
+    }
+
+    // 🎁 Process Prize Logic (Supabase Version)
+    async function processPrize(prize) {
+        const uid = currentUser.id;
+        let message = "";
+        let isBigWin = false;
+
+        try {
+            switch (prize.value) {
+                case "balance_50":
+                    await addBalance(uid, 50);
+                    message = "🎉 ၅၀ ကျပ်ကို လက်ကျန်ငွေထဲ ပေါင်းထည့်လိုက်ပါပြီ။";
+                    break;
+                    
+                case "balance_200":
+                    await addBalance(uid, 200);
+                    message = "🎉 ၂၀၀ ကျပ်ကို လက်ကျန်ငွေထဲ ပေါင်းထည့်လိုက်ပါပြီ။";
+                    break;
+                    
+                case "spin_2":
+                    await addSpinCount(uid, 2);
+                    message = "🎁 Free Spin ၂ ကြိမ် ထပ်ရပါပြီ! ကံထူးပါစေ 🍀";
+                    break;
+                    
+                case "starlight_1":
+                    isBigWin = true;
+                    message = "⭐⭐⭐ STARLIGHT CARD ပေါက်ပါပြီ! ⭐⭐⭐\n\nAdmin (@Johnny) ထံ ချက်ချင်း ဆက်သွယ်ပါ။";
+                    
+                    // Create user notification
+                    await supabase
+                        .from('notifications')
+                        .insert([{
+                            user_id: uid,
+                            text: "🌟 ဂုဏ်ယူပါတယ်! Starlight Card ဆု ပေါက်ရှိပါပြီ။ Admin ထံ ဆက်သွယ်အတည်ပြုပါ။",
+                            time: new Date().toISOString(),                            read: false,
+                            type: "spin_bigwin"
+                        }]);
+                    break;
+                    
+                case "discount_10k":
+                    message = "🏷️ ဒီနေ့ ဝယ်ယူမှုတိုင်းအတွက် 10 Ks လျှော့ဈေး ရရှိပါပြီ!\n(Checkout တွင် အလိုအလျောက် ကျသင့်ငွေ လျှော့ပေးပါမည်)";
+                    break;
+                    
+                default: // thankyou
+                    message = "😅 ကံမထူးတော့ပါဘူး... နောက်တစ်ခါ ထပ်ကြိုးစားကြည့်နော်! 💪";
+            }
+
+            // 🔊 Play win sound for non-thankyou prizes
+            if (prize.value !== "thankyou") {
+                try { winSound.currentTime = 0; winSound.play().catch(()=>{}); } catch(e) {}
+            }
+
+            // ✨ Confetti for big wins
+            if (isBigWin || prize.value.includes("balance") || prize.value === "spin_2") {
+                createConfetti(isBigWin ? 100 : 30);
+                document.getElementById('modal-box').classList.add('big-win');
+            }
+
+            // 📦 Show result modal
+            document.getElementById('result-title').innerText = isBigWin ? "🌟 ဂုဏ်ယူပါတယ်! 🌟" : "🎉 ရလဒ်";
+            document.getElementById('result-msg').innerText = message;
+            document.getElementById('result-modal').style.display = "flex";
+
+        } catch (error) {
+            console.error("Prize processing error:", error);
+            document.getElementById('result-title').innerText = "⚠️ အဆင်မပြေ";
+            document.getElementById('result-msg').innerText = "ဆုချီးမြှင့်ရာတွင် အဆင်မပြေဖြစ်ခဲ့ပါသည်။ Admin ထံ ဆက်သွယ်ပါ။";
+            document.getElementById('result-modal').style.display = "flex";
+        }
+    }
+
+    // 💰 Add Balance Helper (Supabase Version)
+    async function addBalance(uid, amount) {
+        try {
+            const {  userData, error: fetchError } = await supabase
+                .from('users')
+                .select('balance')
+                .eq('id', uid)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const newBalance = (userData.balance || 0) + amount;
+            await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', uid);
+        } catch (error) {
+            console.error("Balance update error:", error);
+            throw error;
+        }
+    }
+
+    // 🎁 Add Spin Count Helper (Supabase Version)
+    async function addSpinCount(uid, count) {
+        try {
+            const {  userData, error: fetchError } = await supabase
+                .from('users')
+                .select('spinCount')
+                .eq('id', uid)
+                .single();
+
+            if (fetchError) throw fetchError;
+
+            const newSpinCount = (userData.spinCount || 0) + count;
+
+            await supabase
+                .from('users')
+                .update({ spinCount: newSpinCount })
+                .eq('id', uid);
+
+            // Update local state
+            currentSpinCount = newSpinCount;
+            updateSpinDisplay();
+        } catch (error) {
+            console.error("Spin count update error:", error);
+            throw error;
+        }
+    }
+
+    // 🔁 Reset Spin State
+    function resetSpin() {
+        isSpinning = false;
+        spinBtn.classList.remove('spinning');
+        spinBtn.innerText = "🎲 SPIN NOW";
+        canvas.style.transition = "none";
+        canvas.style.transform = "rotate(0deg)";
+        setTimeout(() => {
+            canvas.style.transition = "transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)";
+        }, 50);
+        updateSpinDisplay();
+    }
+    // ❌ Close Modal
+    window.closeModal = () => {
+        document.getElementById('result-modal').style.display = "none";
+        document.getElementById('modal-box').classList.remove('big-win');
+        resetSpin();
+    };
+
+    // ⌨️ Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === ' ' || e.key === 'Enter') && !isSpinning && currentSpinCount > 0) {
+            e.preventDefault();
+            startSpin();
+        }
+    });
+
+    // 🧹 Cleanup
+    function cleanup() {
+        if (userChannel) {
+            supabase.removeChannel(userChannel);
+        }
+        document.querySelectorAll('.confetti').forEach(el => el.remove());
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) cleanup();
+    });
+
+    window.addEventListener('beforeunload', cleanup);
+</script>
+
+</body>
+</html>

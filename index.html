@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Johnny Gaming Shop - Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 80px;
+        }
+
+        /* 🔐 Auth Loading Overlay */
+        #auth-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #001f3f; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; z-index: 9999; transition: opacity 0.3s;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(0,174,239,0.3);
+            border-top-color: #00AEEF; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin-bottom: 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { font-size: 14px; color: #00AEEF; }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 2px solid #00AEEF; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .logo { font-size: 17px; font-weight: bold; color: #00AEEF; display: flex; align-items: center; gap: 7px; }
+        
+        /* 👤 User Info Section */
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-balance { 
+            background: rgba(0,174,239,0.15); padding: 7px 13px; border-radius: 18px;
+            font-size: 12px; display: flex; align-items: center; gap: 5px;
+            border: 1px solid rgba(0,174,239,0.3); cursor: pointer; transition: background 0.2s;
+        }
+        .user-balance:hover { background: rgba(0,174,239,0.25); }
+        .balance-amount { font-weight: bold; color: #00AEEF; }
+                .user-uid {
+            font-size: 10px; color: rgba(255,255,255,0.6); cursor: pointer;
+            display: flex; align-items: center; gap: 3px; transition: color 0.2s;
+        }
+        .user-uid:hover { color: #00AEEF; }
+        .user-uid.copied { color: #28a745; }
+
+        /* 🍔 Menu Toggle Button */
+        .menu-toggle {
+            background: none; border: none; color: #fff; font-size: 20px;
+            cursor: pointer; padding: 8px; border-radius: 10px;
+            transition: background 0.2s;
+        }
+        .menu-toggle:hover { background: rgba(255,255,255,0.1); }
+
+        /* 📱 Slide-up Menu */
+        .menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 300;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+        
+        .menu-panel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, #002d5a, #001f3f);
+            border-radius: 24px 24px 0 0; padding: 20px;
+            transform: translateY(100%); transition: transform 0.3s ease;
+            z-index: 301; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+        }
+        .menu-overlay.active .menu-panel { transform: translateY(0); }
+        
+        .menu-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
+        }
+        .menu-title { font-size: 18px; font-weight: bold; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .menu-close {
+            background: rgba(255,255,255,0.1); border: none; color: #fff;
+            width: 32px; height: 32px; border-radius: 50%; font-size: 16px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .menu-close:hover { background: rgba(255,255,255,0.2); }
+
+        /* 👤 User Profile in Menu */
+        .menu-profile {
+            background: rgba(255,255,255,0.08); border-radius: 14px;
+            padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;        }
+        .menu-avatar {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px; color: white;
+            flex-shrink: 0;
+        }
+        .menu-user-info { flex: 1; min-width: 0; }
+        .menu-user-name { font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 3px; }
+        .menu-user-email { font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .menu-user-uid { font-size: 10px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .menu-user-uid:hover { color: #00AEEF; }
+
+        /* 📋 Menu Items Grid */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .menu-item {
+            background: rgba(255,255,255,0.08); border-radius: 14px;
+            padding: 15px 12px; text-decoration: none; color: #fff;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            transition: all 0.25s; cursor: pointer; text-align: center;
+        }
+        .menu-item:hover, .menu-item:active { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .menu-item i { font-size: 22px; }
+        .menu-item span { font-size: 12px; font-weight: 500; }
+        
+        .menu-item.admin-only { display: none; border: 1px dashed #FFC107; }
+        .menu-item.admin-only.visible { display: flex; }
+        .menu-item.admin-only i { color: #FFC107; }
+
+        /* 🔗 Quick Links Section */
+        .menu-section-title {
+            font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7);
+            margin: 10px 0 12px; padding-left: 5px; display: flex; align-items: center; gap: 6px;
+        }
+        .quick-links { display: flex; flex-direction: column; gap: 10px; }
+        .quick-link {
+            display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+            background: rgba(255,255,255,0.08); border-radius: 12px;
+            text-decoration: none; color: #fff; transition: background 0.2s;
+            font-size: 13px;
+        }
+        .quick-link:hover { background: rgba(255,255,255,0.15); }
+        .quick-link i { font-size: 16px; width: 20px; text-align: center; }
+        .quick-link.admin-only { display: none; }
+        .quick-link.admin-only.visible { display: flex; }
+        .quick-link.admin-only i { color: #FFC107; }
+
+        /* 🚪 Logout Button */
+        .menu-logout {            width: 100%; background: rgba(220,53,69,0.2); color: #ff6b6b;
+            border: 1px solid #dc3545; border-radius: 12px;
+            padding: 12px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .menu-logout:hover { background: rgba(220,53,69,0.3); }
+
+        /* 🎁 Welcome Banner */
+        .welcome-banner {
+            margin: 15px; padding: 13px; border-radius: 13px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none; align-items: center; gap: 10px;
+            animation: slideDown 0.4s ease;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .welcome-icon { font-size: 24px; }
+        .welcome-text { font-size: 13px; line-height: 1.3; text-align: left; }
+        .welcome-text b { display: block; font-size: 14px; margin-bottom: 2px; }
+
+        /* 🎮 Game Categories */
+        .section-title {
+            padding: 0 20px; margin: 18px 0 10px; font-size: 15px; font-weight: bold;
+            display: flex; align-items: center; gap: 7px; color: #00AEEF;
+        }
+        .section-title i { font-size: 13px; }
+
+        .games-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px;
+        }
+        .game-card {
+            background: linear-gradient(145deg, #002d5a, #001f3f);
+            border-radius: 16px; padding: 12px 6px; text-align: center;
+            border: 2px solid transparent; cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden; text-decoration: none; display: block;
+        }
+        .game-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #00AEEF, #0072BC);
+            opacity: 0; transition: opacity 0.25s;
+        }
+        .game-card:active { transform: translateY(-3px); border-color: #00AEEF; }
+        .game-card:active::before { opacity: 1; }
+        
+        .game-icon { font-size: 26px; margin-bottom: 7px; display: block; transition: transform 0.25s; }
+        .game-card:active .game-icon { transform: scale(1.08); }
+        .game-name { font-weight: bold; font-size: 10px; margin-bottom: 2px; display: block; }
+        .game-desc { font-size: 8px; color: rgba(255,255,255,0.7); }
+        /* Game-specific colors */
+        .game-mlbb .game-icon { color: #FF6B9D; }
+        .game-ff .game-icon { color: #FF9F43; }
+        .game-pubg .game-icon { color: #F4D03F; }
+        .game-magic .game-icon { color: #54A0FF; }
+        .game-hok .game-icon { color: #9B59B6; }
+        .game-roblox .game-icon { color: #FF4757; }
+        .game-others .game-icon { color: #95A5A6; }
+
+        /* 🏆 Top Buyers Section */
+        .top-buyers {
+            margin: 20px 15px; padding: 13px; border-radius: 13px;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            cursor: pointer; transition: transform 0.15s;
+            display: flex; align-items: center; justify-content: space-between;
+            text-decoration: none;
+        }
+        .top-buyers:active { transform: scale(0.98); }
+        .top-buyers-left { display: flex; align-items: center; gap: 10px; }
+        .trophy-icon { font-size: 24px; color: #FFD700; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .top-buyers-text b { display: block; font-size: 14px; color: white; }
+        .top-buyers-text span { font-size: 11px; opacity: 0.95; }
+        .top-buyers-arrow { font-size: 16px; color: white; opacity: 0.9; }
+
+        /* 🎰 Lucky Spin Banner */
+        .spin-banner {
+            margin: 0 15px 18px; padding: 13px; border-radius: 13px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; animation: pulse 2s infinite;
+            text-decoration: none;
+        }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,87,108,0.4); } 50% { box-shadow: 0 0 0 12px rgba(245,87,108,0); } }
+        .spin-left { display: flex; align-items: center; gap: 10px; }
+        .spin-icon { font-size: 22px; }
+        .spin-text b { display: block; color: white; font-size: 14px; }
+        .spin-text span { font-size: 11px; opacity: 0.95; }
+
+        /* 🧭 Bottom Navigation */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            display: flex; justify-content: space-around; padding: 8px 3px 13px;
+            border-top: 1px solid rgba(0,174,239,0.3);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3); z-index: 200;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            padding: 7px 10px; border-radius: 10px; text-decoration: none;            color: rgba(255,255,255,0.7); transition: all 0.2s;
+            font-size: 9px; min-width: 55px; position: relative;
+        }
+        .nav-item i { font-size: 17px; transition: transform 0.2s; }
+        .nav-item:active { color: #00AEEF; }
+        .nav-item.active { color: #00AEEF; background: rgba(0,174,239,0.15); }
+        .nav-item.active i { transform: scale(1.08); }
+        
+        .nav-badge {
+            position: absolute; top: 3px; right: 22%; 
+            background: #ff4757; color: white; font-size: 8px;
+            padding: 1px 5px; border-radius: 8px; font-weight: bold;
+            display: none; min-width: 16px; text-align: center;
+        }
+        .nav-item.has-badge .nav-badge { display: block; animation: bounce 1s infinite; }
+
+        /* 🔔 Toast Notification */
+        .toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: white; color: #333; padding: 12px 20px; border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 1000; font-size: 14px;
+            display: flex; align-items: center; gap: 10px; max-width: 90%; text-align: left;
+            transition: transform 0.3s ease; border-left: 4px solid #00AEEF;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-left-color: #28a745; }
+        .toast.info { border-left-color: #17a2b8; }
+        .toast i { font-size: 18px; }
+
+        /* 📱 Responsive */
+        @media (max-width: 360px) {
+            .games-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .game-card { padding: 15px 10px; }
+            .game-icon { font-size: 32px; }
+            .game-name { font-size: 12px; }
+            .game-desc { font-size: 10px; }
+            .menu-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🔐 Auth Loader -->
+<div id="auth-loader">
+    <div class="spinner"></div>
+    <div class="loader-text">စစ်ဆေးနေသည်...</div>
+</div>
+
+<!-- 🎮 Main Content -->
+<div id="main-content" style="display: none;">    <!-- 🎮 Header -->
+    <div class="header">
+        <div class="logo"><i class="fas fa-gamepad"></i> JOHNNY SHOP</div>
+        
+        <div class="user-info">
+            <!-- 💰 Balance (click to copy) -->
+            <div class="user-balance" onclick="copyBalance()" title="Copy Balance">
+                <i class="fas fa-coins"></i>
+                <span class="balance-amount" id="balance-display">0</span> Ks
+            </div>
+            <!-- 🆔 UID Display (click to copy) -->
+            <div class="user-uid" id="uid-display" onclick="copyUID()" title="Copy UID">
+                <i class="fas fa-fingerprint"></i>
+                <span id="uid-text">UID: ...</span>
+            </div>
+            <!-- 🍔 Menu Toggle -->
+            <button class="menu-toggle" onclick="toggleMenu()" aria-label="Open Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 📱 Slide-up Menu -->
+    <div class="menu-overlay" id="menu-overlay" onclick="closeMenu(event)">
+        <div class="menu-panel" onclick="event.stopPropagation()">
+            <div class="menu-header">
+                <div class="menu-title"><i class="fas fa-list"></i> Menu</div>
+                <button class="menu-close" onclick="closeMenu()"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <!-- 👤 User Profile in Menu -->
+            <div class="menu-profile">
+                <div class="menu-avatar" id="menu-avatar">U</div>
+                <div class="menu-user-info">
+                    <div class="menu-user-name" id="menu-username">Loading...</div>
+                    <div class="menu-user-email" id="menu-useremail">...</div>
+                    <div class="menu-user-uid" onclick="copyUID()">
+                        <i class="fas fa-fingerprint"></i>
+                        <span id="menu-uid">UID: ...</span>
+                        <i class="fas fa-copy" style="font-size:9px;opacity:0.7"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📋 Menu Grid Items -->
+            <div class="menu-grid">
+                <a href="profile.html" class="menu-item">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Account Profile</span>
+                </a>                <a href="message.html" class="menu-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Message</span>
+                    <span class="nav-badge" id="menu-notif-badge" style="position:absolute;top:8px;right:8px">0</span>
+                </a>
+                <a href="history.html" class="menu-item">
+                    <i class="fas fa-history"></i>
+                    <span>မှတ်တမ်း</span>
+                </a>
+                <a href="recharge.html" class="menu-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>ငွေဖြည့်မည်</span>
+                </a>
+                <a href="https://t.me/Johnny_AZM" target="_blank" class="menu-item">
+                    <i class="fab fa-telegram-plane"></i>
+                    <span>Admin နဲ့စကားပြော</span>
+                </a>
+                <!-- Admin Only Items -->
+                <a href="admin.html" class="menu-item admin-only" id="admin-panel-link">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin Only</span>
+                </a>
+                <a href="admin-orders.html" class="menu-item admin-only" id="admin-orders-link">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Admin Orders</span>
+                </a>
+            </div>
+
+            <!-- 🔗 Quick Links -->
+            <div class="menu-section-title"><i class="fas fa-link"></i> အမြန်လင့်ခ်များ</div>
+            <div class="quick-links">
+                <a href="lucky_spin.html" class="quick-link">
+                    <i class="fas fa-gift"></i> 🎰 Lucky Spin ကံစမ်းမည်
+                </a>
+                <a href="topbuyers.html" class="quick-link">
+                    <i class="fas fa-trophy"></i> 🏆 Top Buyers ကြည့်မည်
+                </a>
+                <a href="guide.html" class="quick-link">
+                    <i class="fas fa-book"></i> 📚 အသုံးပြုနည်းလမ်းညွှန်
+                </a>
+                <a href="https://t.me/Johnny_AZM" target="_blank" class="quick-link admin-only" id="admin-chat-link">
+                    <i class="fas fa-headset"></i> 👨‍💼 Admin Support Chat
+                </a>
+            </div>
+
+            <!-- 🚪 Logout -->
+            <button class="menu-logout" onclick="doLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>    </div>
+
+    <!-- 🎁 Welcome Banner -->
+    <div class="welcome-banner" id="welcome-banner">
+        <div class="welcome-icon">👋</div>
+        <div class="welcome-text">
+            <b id="welcome-name">Hello Boss!</b>
+            <span>ဂိမ်းပစ္စည်းဝယ်ယူဖို့ အဆင်သင့်ပါပြီ 🎮</span>
+        </div>
+    </div>
+
+    <!-- 🎮 Game Categories -->
+    <div class="section-title"><i class="fas fa-fire"></i> ရေပန်းအစားဆုံး ဂိမ်းများ</div>
+    <div class="games-grid">
+        <a href="buy_mlbb.html" class="game-card game-mlbb"><span class="game-icon"><i class="fas fa-dragon"></i></span><span class="game-name">Mobile Legends</span><span class="game-desc">Diamonds, Skins</span></a>
+        <a href="buy_ff.html" class="game-card game-ff"><span class="game-icon"><i class="fas fa-fire-alt"></i></span><span class="game-name">Free Fire</span><span class="game-desc">Diamonds, Bundles</span></a>
+        <a href="buy_pubg.html" class="game-card game-pubg"><span class="game-icon"><i class="fas fa-crosshairs"></i></span><span class="game-name">PUBG Mobile</span><span class="game-desc">UC, Royale Pass</span></a>
+        <a href="buy_magic_chess.html" class="game-card game-magic"><span class="game-icon"><i class="fas fa-chess-knight"></i></span><span class="game-name">Magic Chess</span><span class="game-desc">GoGo Diamonds</span></a>
+        <a href="buy_hok.html" class="game-card game-hok"><span class="game-icon"><i class="fas fa-crown"></i></span><span class="game-name">Honor of Kings</span><span class="game-desc">Diamonds, Skins</span></a>
+        <a href="buy_others.html" class="game-card game-others"><span class="game-icon"><i class="fas fa-ellipsis-h"></i></span><span class="game-name">Others</span><span class="game-desc">More Games 🔜</span></a>
+    </div>
+
+    <!-- 🏆 Top Buyers -->
+    <a href="topbuyers.html" class="top-buyers">
+        <div class="top-buyers-left"><span class="trophy-icon">🏆</span><div class="top-buyers-text"><b>Top Buyers Leaderboard</b><span>အများဆုံးဝယ်ယူသူများကို ကြည့်ရှုရန် 👑</span></div></div>
+        <span class="top-buyers-arrow"><i class="fas fa-chevron-right"></i></span>
+    </a>
+
+    <!-- 🎰 Lucky Spin -->
+    <a href="lucky_spin.html" class="spin-banner">
+        <div class="spin-left"><span class="spin-icon">🎰</span><div class="spin-text"><b>Lucky Spin ကံစမ်းမလား?</b><span>ဆုကြီးများ ရယူနိုင်ဖို့ အခုပဲ လှည့်လိုက်တော့! ✨</span></div></div>
+        <span style="background:white;color:#f5576c;padding:5px 10px;border-radius:15px;font-weight:bold;font-size:10px;">FREE</span>
+    </a>
+
+    <!-- 🧭 Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="message.html" class="nav-item"><i class="fas fa-bell"></i><span>Messages</span><span class="nav-badge" id="notif-badge">0</span></a>
+        <a href="history.html" class="nav-item"><i class="fas fa-history"></i><span>မှတ်တမ်း</span></a>
+        <a href="orders.html" class="nav-item"><i class="fas fa-shopping-cart"></i><span>အော်ဒါ</span></a>
+        <a href="#" class="nav-item" onclick="toggleMenu(); return false;"><i class="fas fa-bars"></i><span>Menu</span></a>
+    </div>
+</div>
+
+<!-- 🔔 Toast Notification -->
+<div class="toast" id="toast">
+    <i class="fas fa-info-circle" id="toast-icon"></i>
+    <span id="toast-msg"></span>
+</div>
+<script>
+    // ၁။ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let currentUser = null;
+    let userData = null;
+    let realtimeChannel = null;
+
+    // ၂။ Auth State Check & Redirect Logic
+    async function initAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        const loader = document.getElementById('auth-loader');
+        const mainContent = document.getElementById('main-content');
+
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        currentUser = session.user;
+        
+        // Hide loader, show content
+        loader.style.opacity = '0';
+        setTimeout(() => { loader.style.display = 'none'; mainContent.style.display = 'block'; }, 300);
+
+        // 👤 Update User Info
+        updateUserInfo(currentUser);
+
+        // 💰 Real-time Balance & Role (Supabase Realtime)
+        setupRealtimeBalance(currentUser.id);
+
+        // 🔔 Notification Badge
+        updateNotificationBadge(currentUser.id);
+    }
+
+    // Listen for Auth State Changes (Login/Logout)
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session) {
+            currentUser = session.user;
+            updateUserInfo(currentUser);
+        }
+    });
+
+    // 💰 Setup Realtime Listener for Balance    function setupRealtimeBalance(userId) {
+        // Initial fetch
+        fetchUserData(userId);
+
+        // Realtime subscription
+        realtimeChannel = supabase
+            .channel('public:users')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users',
+                filter: `id=eq.${userId}`
+            }, (payload) => {
+                const newData = payload.new;
+                updateBalanceDisplay(newData.balance || 0);
+                checkAdminRole(newData.role);
+            })
+            .subscribe();
+    }
+
+    // Initial Data Fetch
+    async function fetchUserData(userId) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error("Error fetching user:", error);
+            return;
+        }
+
+        if (data) {
+            userData = data;
+            updateBalanceDisplay(data.balance || 0);
+            checkAdminRole(data.role);
+        }
+    }
+
+    // Update Balance Display
+    function updateBalanceDisplay(balance) {
+        document.getElementById('balance-display').innerText = balance.toLocaleString();
+    }
+
+    // Check & Show Admin Items
+    function checkAdminRole(role) {
+        if (role === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+        }    }
+
+    // 👤 Update User Info Display
+    function updateUserInfo(user) {
+        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "User";
+        const email = user.email || "N/A";
+        const uid = user.id;
+        const initials = name.substring(0, 2).toUpperCase();
+
+        // Header UID
+        document.getElementById('uid-text').innerText = `UID: ${uid.substring(0, 8)}...`;
+        document.getElementById('uid-display').dataset.uid = uid;
+        
+        // Menu Profile
+        document.getElementById('menu-username').innerText = name;
+        document.getElementById('menu-useremail').innerText = email;
+        document.getElementById('menu-uid').innerText = `UID: ${uid.substring(0, 12)}...`;
+        document.getElementById('menu-uid').dataset.uid = uid;
+        document.getElementById('menu-avatar').innerText = initials;
+        
+        // Welcome Banner
+        document.getElementById('welcome-name').innerText = `Hello, ${name}! 👋`;
+        document.getElementById('welcome-banner').style.display = 'flex';
+    }
+
+    // 🔔 Update Notification Badge (Simple Fetch)
+    async function updateNotificationBadge(userId) {
+        try {
+            // Assuming notifications table has user_id column
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('read', false)
+                .limit(10);
+
+            if (error) throw error;
+            
+            const count = data?.length || 0;
+            const badges = document.querySelectorAll('#notif-badge, #menu-notif-badge');
+            badges.forEach(badge => {
+                if (count > 0) {
+                    badge.innerText = count > 9 ? '9+' : count;
+                    badge.closest('.nav-item, .menu-item')?.classList.add('has-badge');
+                }
+            });
+        } catch (e) { 
+            console.warn("Badge error:", e.message); 
+        }
+    }
+    // 🍔 Menu Toggle Functions
+    window.toggleMenu = function() {
+        document.getElementById('menu-overlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    window.closeMenu = function(event) {
+        if (event && event.target !== event.currentTarget) return;
+        document.getElementById('menu-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // 📋 Copy Functions
+    window.copyUID = async function() {
+        const uid = document.getElementById('uid-display').dataset.uid || document.getElementById('menu-uid').dataset.uid;
+        if (!uid) return;
+        
+        try {
+            await navigator.clipboard.writeText(uid);
+            showToast('🆔 UID ကူးယူပြီးပါပြီ!', 'success');
+            
+            const uidEls = document.querySelectorAll('.user-uid, .menu-user-uid');
+            uidEls.forEach(el => {
+                el.classList.add('copied');
+                setTimeout(() => el.classList.remove('copied'), 1500);
+            });
+        } catch (e) { showToast('❌ Copy မရပါ', 'info'); }
+    }
+
+    window.copyBalance = async function() {
+        const balance = document.getElementById('balance-display').innerText;
+        try {
+            await navigator.clipboard.writeText(balance + ' Ks');
+            showToast('💰 Balance ကူးယူပြီးပါပြီ!', 'success');
+        } catch (e) { showToast('❌ Copy မရပါ', 'info'); }
+    }
+
+    // 🎨 Toast Notification
+    function showToast(message, type = 'info', duration = 2500) {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toast-icon');
+        const msg = document.getElementById('toast-msg');
+        
+        msg.textContent = message;
+        toast.className = `toast ${type} show`;
+        icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-info-circle';
+        
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+    // 🧭 Bottom Nav Active State
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (this.onclick && this.onclick.toString().includes('toggleMenu')) return;
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // 🚪 Logout with Supabase
+    window.doLogout = async function() {
+        closeMenu();
+        if (confirm("Logout လုပ်မလား သားကြီး? 🔐")) {
+            try { 
+                await supabase.auth.signOut();
+                // Unsubscribe realtime channel
+                if (realtimeChannel) {
+                    supabase.removeChannel(realtimeChannel);
+                }
+                showToast('👋 Logout အောင်မြင်ပါပြီ!', 'success');
+                setTimeout(() => { window.location.href = "login.html"; }, 1000);
+            } catch (e) { showToast("❌ Logout Error: " + e.message, 'info', 4000); }
+        }
+    }
+
+    // 🔄 Pull to Refresh
+    let startY = 0;
+    document.addEventListener('touchstart', e => { startY = e.touches[0].pageY; }, { passive: true });
+    document.addEventListener('touchend', e => {
+        if (e.changedTouches[0].pageY - startY > 100 && window.scrollY === 0) {
+            showToast('🔄 Refreshing...', 'info', 1000);
+            setTimeout(() => location.reload(), 800);
+        }
+    }, { passive: true });
+
+    // ⌨️ Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+        if (e.key === 'm' || e.key === 'M') toggleMenu();
+    });
+
+    // Initialize
+    initAuth();
+
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) {
+            supabase.removeChannel(realtimeChannel);        }
+    });
+</script>
+
+</body>
+</html>

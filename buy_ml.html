@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💎 MLBB Diamonds - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #6c5ce7; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; display: flex; align-items: center; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 20px; max-width: 650px; margin: auto; }
+
+        /* 💎 MLBB Banner */
+        .mlbb-banner {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            border-radius: 20px; padding: 20px; color: white; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 8px 25px rgba(108,92,231,0.4);
+            position: relative; overflow: hidden;
+        }
+        .mlbb-banner::before {
+            content: '⚔️'; position: absolute; font-size: 70px; opacity: 0.15;
+            top: -15px; right: -10px; animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .mlbb-banner h2 { margin: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
+        .mlbb-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.95; }
+
+        /* 📦 Input Group */
+        .input-group {
+            background: #002d5a; padding: 18px; border-radius: 16px;
+            margin-bottom: 20px; border: 1px solid #004080;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }        .input-label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #a29bfe; }
+        .id-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .mlbb-input {
+            flex: 1; padding: 12px; border: 1px solid #004080;
+            background: #001f3f; color: white; border-radius: 10px; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .mlbb-input:focus { border-color: #6c5ce7; box-shadow: 0 0 0 3px rgba(108,92,231,0.2); }
+        .mlbb-input::placeholder { color: rgba(255,255,255,0.5); }
+        .mlbb-input.valid { border-color: #28a745; }
+        .mlbb-input.invalid { border-color: #dc3545; }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white;
+            border: none; padding: 12px 16px; border-radius: 10px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .check-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108,92,231,0.4); }
+        .check-btn:disabled { background: #555; cursor: not-allowed; }
+        .check-btn.checking::after {
+            content: ''; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .copy-btn {
+            background: rgba(108,92,231,0.2); color: #a29bfe; border: none;
+            padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #6c5ce7; color: white; }
+        .copy-btn.copied { background: #28a745; color: white; }
+        
+        .input-hint { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.5; }
+        .input-hint b { color: #a29bfe; }
+        
+        /* ✅/❌ Status Indicator */
+        .status-badge {
+            display: none; align-items: center; gap: 6px; padding: 8px 12px;
+            border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .status-badge.show { display: flex; }
+        .status-valid { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-invalid { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 📦 Package Section */
+        .section-label { font-weight: 600; margin: 25px 0 12px; display: block; color: #a29bfe; font-size: 15px; }        
+        /* 🔀 Category Tabs */
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 8px 14px; background: rgba(108,92,231,0.1); border: 1px solid rgba(108,92,231,0.3);
+            border-radius: 20px; color: #a29bfe; font-size: 11px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+        }
+        .tab-btn:hover, .tab-btn.active { background: #6c5ce7; color: white; border-color: #6c5ce7; }
+        
+        /* 🔍 Search for Large Lists */
+        .search-box {
+            width: 100%; padding: 10px 12px 10px 35px; border: 1px solid #004080;
+            background: #001f3f; color: white; border-radius: 10px; font-size: 13px;
+            margin-bottom: 12px; display: none;
+        }
+        .search-box.show { display: block; }
+        .search-box::placeholder { color: rgba(255,255,255,0.5); }
+        .search-icon { position: relative; left: 12px; color: rgba(255,255,255,0.5); }
+
+        /* 📦 Items Grid */
+        .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .items-grid::-webkit-scrollbar { width: 4px; }
+        .items-grid::-webkit-scrollbar-thumb { background: rgba(108,92,231,0.5); border-radius: 2px; }
+        
+        .item-card {
+            background: #002d5a; padding: 12px 10px; border-radius: 12px;
+            border: 2px solid #004080; cursor: pointer; text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .item-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,92,231,0.3); }
+        .item-card.selected { 
+            border-color: #6c5ce7; background: #003a75; 
+            box-shadow: 0 0 0 3px rgba(108,92,231,0.2);
+        }
+        .item-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #6c5ce7, #a29bfe); opacity: 0; transition: opacity 0.2s;
+        }
+        .item-card.selected::before { opacity: 1; }
+        
+        .dm-icon { font-size: 20px; margin-bottom: 5px; display: block; }
+        .dm-amount { font-weight: 700; font-size: 13px; color: white; display: block; margin-bottom: 2px; }
+        .dm-price { font-size: 11px; color: #a29bfe; font-weight: 600; }
+        .dm-badge {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white;
+            padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: bold;
+            margin-top: 5px; display: inline-block;        }
+        .dm-badge.pass { background: linear-gradient(135deg, #fd79a8, #e84393); color: white; }
+        .dm-badge.double { background: linear-gradient(135deg, #00cec9, #00b894); color: white; }
+        .dm-badge.best { background: linear-gradient(135deg, #fdcb6e, #f39c12); color: #112240; }
+        .dm-badge.new { background: linear-gradient(135deg, #00b894, #00cec9); color: white; }
+
+        /* 🔘 Buy Button */
+        .buy-btn {
+            width: 100%; background: linear-gradient(135deg, #00A651, #00c853);
+            color: white; border: none; padding: 16px; border-radius: 30px;
+            font-size: 17px; font-weight: 600; margin-top: 25px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,166,81,0.4); transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,166,81,0.5); }
+        .buy-btn:active:not(:disabled) { transform: translateY(1px); }
+        .buy-btn:disabled { 
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7;
+        }
+        .buy-btn.loading { pointer-events: none; }
+        .buy-btn.loading::after {
+            content: ''; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* ⚠️ Warning Box */
+        .warning-box {
+            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
+            padding: 12px 15px; border-radius: 0 10px 10px 0; margin: 20px 0;
+            font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5;
+        }
+        .warning-box i { margin-right: 6px; color: #FFC107; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .mlbb-banner { padding: 16px; }
+            .items-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 350px; }
+            .item-card { padding: 10px 8px; }
+            .dm-amount { font-size: 12px; }
+            .dm-price { font-size: 10px; }
+            .id-row { flex-direction: column; }
+            .check-btn, .copy-btn { width: 100%; justify-content: center; }
+            .category-tabs { gap: 6px; }
+            .tab-btn { padding: 7px 12px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">💎 MLBB Diamonds</div>
+</div>
+
+<div class="container">
+    <!-- 💎 Banner -->
+    <div class="mlbb-banner">
+        <h2><i class="fas fa-gem"></i> Mobile Legends</h2>
+        <p>မိတ်ဆွေရဲ့ MLBB အကောင့်ထဲကို ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရောက်ရှိစေရန် 🚀</p>
+    </div>
+
+    <!-- ⚠️ Warning -->
+    <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <b>သတိပြုရန်:</b> Player ID နှင့် Server ID ကို တိကျစွာ ရိုက်ထည့်ပါ။ 
+        မှားယွင်းပါက Diamonds ပြန်လည်ပို့ဆောင်ပေးနိုင်မည် မဟုတ်ပါ။
+    </div>
+
+    <!-- 👤 ID Input + Check -->
+    <div class="input-group">
+        <label class="input-label">🆔 Player ID & Server ID</label>
+        <div class="id-row">
+            <input type="number" id="player-id" class="mlbb-input" placeholder="Player ID (ဥပမာ: 123456789)" autocomplete="off">
+            <input type="number" id="server-id" class="mlbb-input" placeholder="Server (ဥပမာ: 8021)" style="flex:0.6">
+        </div>
+        <div style="display:flex;gap:8px">
+            <button class="check-btn" id="checkBtn" onclick="checkMLBBID()">
+                <i class="fas fa-search"></i> စစ်ဆေးမည်
+            </button>
+            <button class="copy-btn" onclick="copyIDs()">📋 Copy</button>
+        </div>
+        <p class="input-hint">
+            * <b>Player ID:</b> 8-10 digit numeric<br>
+            * <b>Server ID:</b> 4 digit numeric<br>
+            * ✅ "စစ်ဆေးမည်" ကို နှိပ်ပြီး ပုံစံမှန်/မှား အရင်စစ်ပါ
+        </p>
+        <!-- Status Badge -->
+        <div class="status-badge" id="status-badge">
+            <span id="status-icon"></span>
+            <span id="status-text"></span>
+        </div>
+    </div>
+
+    <!-- 📦 Diamond Package Selection -->
+    <label class="section-label">📦 Package ရွေးချယ်ပါ</label>
+    
+    <!-- Category Filter Tabs -->
+    <div class="category-tabs">        <button class="tab-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="tab-btn" onclick="filterCategory('pass', this)">🎫 Pass</button>
+        <button class="tab-btn" onclick="filterCategory('double', this)">✨ 2× Diamonds</button>
+        <button class="tab-btn" onclick="filterCategory('standard', this)">💎 Standard</button>
+    </div>
+    
+    <!-- Search Box (for Standard category) -->
+    <div style="position:relative">
+        <i class="fas fa-search search-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:1"></i>
+        <input type="text" class="search-box" id="package-search" placeholder="🔍 Diamond amount ရှာဖွေရန်..." oninput="filterPackages(this.value)">
+    </div>
+    
+    <div class="items-grid" id="packages-grid">
+        <!-- 🎫 Category 1: MLBB Pass -->
+        <div class="item-card" onclick="selectItem(this, 'Weekly Pass', 6800, 'pass')" data-type="pass" data-search="weekly pass 6800">
+            <span class="dm-icon">🎫</span>
+            <span class="dm-amount">Weekly Pass</span>
+            <span class="dm-price">6,800 Ks</span>
+            <span class="dm-badge pass">7 Days</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, 'Twilight Pass', 36000, 'pass')" data-type="pass" data-search="twilight pass 36000">
+            <span class="dm-icon">✨</span>
+            <span class="dm-amount">Twilight Pass</span>
+            <span class="dm-price">36,000 Ks</span>
+            <span class="dm-badge pass">Premium</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, 'Weekly Epic Pass', 3700, 'pass')" data-type="pass" data-search="weekly epic pass 3700">
+            <span class="dm-icon">👑</span>
+            <span class="dm-amount">Weekly Epic</span>
+            <span class="dm-price">3,700 Ks</span>
+            <span class="dm-badge pass">Epic</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, 'Monthly Epic Pass', 18000, 'pass')" data-type="pass" data-search="monthly epic pass 18000">
+            <span class="dm-icon">👑</span>
+            <span class="dm-amount">Monthly Epic</span>
+            <span class="dm-price">18,000 Ks</span>
+            <span class="dm-badge best">Best Value</span>
+        </div>
+        
+        <!-- ✨ Category 2: 2× Diamonds (Double Bonus) -->
+        <div class="item-card" onclick="selectItem(this, '50×2 (100)', 3700, 'double')" data-type="double" data-search="50 2 100 3700 double">
+            <span class="dm-icon">✨</span>
+            <span class="dm-amount">50×2 = 100</span>
+            <span class="dm-price">3,700 Ks</span>
+            <span class="dm-badge double">🔥 Double</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '150×2 (300)', 11000, 'double')" data-type="double" data-search="150 2 300 11000 double">
+            <span class="dm-icon">✨</span>
+            <span class="dm-amount">150×2 = 300</span>
+            <span class="dm-price">11,000 Ks</span>            <span class="dm-badge double">Popular</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '250×2 (500)', 17150, 'double')" data-type="double" data-search="250 2 500 17150 double">
+            <span class="dm-icon">✨</span>
+            <span class="dm-amount">250×2 = 500</span>
+            <span class="dm-price">17,150 Ks</span>
+            <span class="dm-badge double">Value</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '500×2 (1000)', 35000, 'double')" data-type="double" data-search="500 2 1000 35000 double">
+            <span class="dm-icon">✨</span>
+            <span class="dm-amount">500×2 = 1000</span>
+            <span class="dm-price">35,000 Ks</span>
+            <span class="dm-badge best">Best</span>
+        </div>
+        
+        <!-- 💎 Category 3: Standard Diamonds (Sorted by price) -->
+        <div class="item-card" onclick="selectItem(this, '11 Diamonds', 900, 'standard')" data-type="standard" data-search="11 diamonds 900">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">11</span>
+            <span class="dm-price">900 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '22 Diamonds', 1750, 'standard')" data-type="standard" data-search="22 diamonds 1750">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">22</span>
+            <span class="dm-price">1,750 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '86 Diamonds', 5000, 'standard')" data-type="standard" data-search="86 diamonds 5000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">86</span>
+            <span class="dm-price">5,000 Ks</span>
+            <span class="dm-badge new">New</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '112 Diamonds', 8400, 'standard')" data-type="standard" data-search="112 diamonds 8400">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">112</span>
+            <span class="dm-price">8,400 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '172 Diamonds', 10000, 'standard')" data-type="standard" data-search="172 diamonds 10000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">172</span>
+            <span class="dm-price">10,000 Ks</span>
+            <span class="dm-badge">Popular</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '257 Diamonds', 14500, 'standard')" data-type="standard" data-search="257 diamonds 14500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">257</span>
+            <span class="dm-price">14,500 Ks</span>
+            <span class="dm-badge">Value</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '344 Diamonds', 20000, 'standard')" data-type="standard" data-search="344 diamonds 20000">            <span class="dm-icon">💎</span>
+            <span class="dm-amount">344</span>
+            <span class="dm-price">20,000 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '429 Diamonds', 24500, 'standard')" data-type="standard" data-search="429 diamonds 24500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">429</span>
+            <span class="dm-price">24,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '514 Diamonds', 29000, 'standard')" data-type="standard" data-search="514 diamonds 29000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">514</span>
+            <span class="dm-price">29,000 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '600 Diamonds', 34050, 'standard')" data-type="standard" data-search="600 diamonds 34050">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">600</span>
+            <span class="dm-price">34,050 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '706 Diamonds', 39400, 'standard')" data-type="standard" data-search="706 diamonds 39400">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">706</span>
+            <span class="dm-price">39,400 Ks</span>
+            <span class="dm-badge">Best</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '878 Diamonds', 49500, 'standard')" data-type="standard" data-search="878 diamonds 49500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">878</span>
+            <span class="dm-price">49,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1049 Diamonds', 59600, 'standard')" data-type="standard" data-search="1049 diamonds 59600">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">1,049</span>
+            <span class="dm-price">59,600 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1135 Diamonds', 65500, 'standard')" data-type="standard" data-search="1135 diamonds 65500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">1,135</span>
+            <span class="dm-price">65,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1220 Diamonds', 70800, 'standard')" data-type="standard" data-search="1220 diamonds 70800">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">1,220</span>
+            <span class="dm-price">70,800 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1412 Diamonds', 81800, 'standard')" data-type="standard" data-search="1412 diamonds 81800">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">1,412</span>
+            <span class="dm-price">81,800 Ks</span>
+        </div>        <div class="item-card" onclick="selectItem(this, '2195 Diamonds', 122300, 'standard')" data-type="standard" data-search="2195 diamonds 122300">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">2,195</span>
+            <span class="dm-price">122,300 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '3688 Diamonds', 201000, 'standard')" data-type="standard" data-search="3688 diamonds 201000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">3,688</span>
+            <span class="dm-price">201,000 Ks</span>
+            <span class="dm-badge best">Elite</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '5532 Diamonds', 301000, 'standard')" data-type="standard" data-search="5532 diamonds 301000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">5,532</span>
+            <span class="dm-price">301,000 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '6238 Diamonds', 340200, 'standard')" data-type="standard" data-search="6238 diamonds 340200">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">6,238</span>
+            <span class="dm-price">340,200 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '8433 Diamonds', 457500, 'standard')" data-type="standard" data-search="8433 diamonds 457500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">8,433</span>
+            <span class="dm-price">457,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '9288 Diamonds', 498500, 'standard')" data-type="standard" data-search="9288 diamonds 498500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">9,288</span>
+            <span class="dm-price">498,500 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '10700 Diamonds', 577200, 'standard')" data-type="standard" data-search="10700 diamonds 577200">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">10,700</span>
+            <span class="dm-price">577,200 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '11483 Diamonds', 620000, 'standard')" data-type="standard" data-search="11483 diamonds 620000">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">11,483</span>
+            <span class="dm-price">620,000 Ks</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '12976 Diamonds', 698500, 'standard')" data-type="standard" data-search="12976 diamonds 698500">
+            <span class="dm-icon">💎</span>
+            <span class="dm-amount">12,976</span>
+            <span class="dm-price">698,500 Ks</span>
+            <span class="dm-badge best">Ultimate</span>
+        </div>
+    </div>
+
+    <!-- 🔘 Buy Button -->    <button class="buy-btn" id="buyBtn" onclick="processPurchase()">
+        <i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်
+    </button>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let selectedItemName = "";
+    let selectedItemPrice = 0;
+    let selectedItemType = "standard";
+    let currentUser = null;
+    let isIDValid = false;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            setTimeout(() => { window.location.href = "login.html"; }, 1000);
+            return;
+        }
+        
+        currentUser = session.user;
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+
+    // 📦 Item Selection
+    window.selectItem = (el, name, price, type) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItemName = name;
+        selectedItemPrice = price;
+        selectedItemType = type;
+    };
+    // 🔀 Filter by Category Tab
+    window.filterCategory = (category, btn) => {
+        // Update active tab
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show/hide search box for standard category
+        const searchBox = document.getElementById('package-search');
+        searchBox.classList.toggle('show', category === 'standard');
+        if (category !== 'standard') searchBox.value = '';
+        
+        // Show/hide items
+        document.querySelectorAll('.item-card').forEach(card => {
+            if (category === 'all' || card.dataset.type === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+
+    // 🔍 Search within Standard Category
+    window.filterPackages = (query) => {
+        const q = query.toLowerCase().trim();
+        document.querySelectorAll('.item-card[data-type="standard"]').forEach(card => {
+            const search = card.dataset.search || '';
+            card.style.display = search.includes(q) ? 'block' : 'none';
+        });
+    };
+
+    // 📋 Copy IDs
+    window.copyIDs = async () => {
+        const pid = document.getElementById('player-id').value.trim();
+        const sid = document.getElementById('server-id').value.trim();
+        const btn = document.querySelector('.copy-btn');
+        
+        if (!pid || !sid) { alert("ID နှစ်ခုလုံး ဖြည့်ပါ"); return; }
+        
+        try {
+            await navigator.clipboard.writeText(`${pid} (${sid})`);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) { alert("Copy မရပါ။ ကိုယ်တိုင် ကူးယူပါ။"); }
+    };
+
+    // 🔍 Validate MLBB ID Format
+    function isValidMLBBFormat(pid, sid) {        const pidRegex = /^\d{8,10}$/;
+        const sidRegex = /^\d{4}$/;
+        return pidRegex.test(pid) && sidRegex.test(sid);
+    }
+
+    // 🌐 Check MLBB ID
+    async function checkMLBBID() {
+        const pidInput = document.getElementById('player-id');
+        const sidInput = document.getElementById('server-id');
+        const checkBtn = document.getElementById('checkBtn');
+        const badge = document.getElementById('status-badge');
+        
+        const pid = pidInput.value.trim();
+        const sid = sidInput.value.trim();
+        
+        pidInput.classList.remove('valid', 'invalid');
+        sidInput.classList.remove('valid', 'invalid');
+        badge.classList.remove('show', 'status-valid', 'status-invalid');
+        isIDValid = false;
+
+        if (!pid || !sid) {
+            showStatus('❌', 'ID နှစ်ခုလုံး ဖြည့်ပါ', 'invalid');
+            if (!pid) pidInput.focus(); else sidInput.focus();
+            return;
+        }
+
+        if (!isValidMLBBFormat(pid, sid)) {
+            showStatus('❌', 'ID ပုံစံမှားနေပါသည်', 'invalid');
+            if (!/^\d{8,10}$/.test(pid)) pidInput.classList.add('invalid');
+            if (!/^\d{4}$/.test(sid)) sidInput.classList.add('invalid');
+            return;
+        }
+
+        checkBtn.disabled = true;
+        checkBtn.classList.add('checking');
+        checkBtn.innerHTML = '';
+
+        try {
+            isIDValid = true;
+            showStatus('✅', 'ID ပုံစံမှန်ကန်ပါသည် ✓', 'valid');
+            pidInput.classList.add('valid');
+            sidInput.classList.add('valid');
+        } catch (error) {
+            console.warn("MLBB Check Error:", error);
+            showStatus('⚠️', 'Format မှန်ကန်ပါသည်', 'valid');
+            pidInput.classList.add('valid');
+            sidInput.classList.add('valid');
+            isIDValid = true;
+        } finally {
+            checkBtn.disabled = false;            checkBtn.classList.remove('checking');
+            checkBtn.innerHTML = '<i class="fas fa-search"></i> စစ်ဆေးမည်';
+        }
+    }
+
+    // 🎨 Show Status Badge
+    function showStatus(icon, text, type) {
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        statusIcon.textContent = icon;
+        statusText.textContent = text;
+        badge.className = `status-badge show status-${type}`;
+    }
+
+    // 🤖 Send to Telegram Admin
+    async function sendToAdmin(details) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+        
+        const message = `
+💎 *MLBB ORDER*
+━━━━━━━━━━━━━━━━━━
+📊 *Type:* ${details.itemType === 'pass' ? '🎫 Pass' : details.itemType === 'double' ? '✨ 2× Diamonds' : '💎 Standard'}
+🆔 *Player ID:* ${details.playerID} (${details.serverID})
+👤 *UID:* ${details.uid}
+📧 *Email:* ${details.email}
+💎 *Package:* ${details.item}
+💰 *Price:* ${details.price.toLocaleString()} Ks
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ စစ်ဆေးပြီး ဖြည့်ပေးပါရန် 🚀
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Telegram API Error:", e); }
+    }
+
+    // 💰 Update Balance (Supabase Version)
+    async function updateBalance(uid, amountChange) {        const {  userData, error: fetchError } = await supabase
+            .from('users')
+            .select('balance, total_spent, spin_count')
+            .eq('id', uid)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newBalance = (userData.balance || 0) + amountChange;
+        const newTotalSpent = (userData.total_spent || 0) + (amountChange < 0 ? -amountChange : 0);
+        const newSpinCount = (userData.spin_count || 0) + (amountChange < 0 ? 1 : 0);
+
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+                balance: newBalance,
+                total_spent: newTotalSpent,
+                spin_count: newSpinCount
+            })
+            .eq('id', uid);
+
+        if (updateError) throw updateError;
+    }
+
+    // 🛒 Purchase Process
+    window.processPurchase = async () => {
+        const btn = document.getElementById('buyBtn');
+        const pid = document.getElementById('player-id').value.trim();
+        const sid = document.getElementById('server-id').value.trim();
+
+        if (!currentUser) { alert("ကျေးဇူးပြု၍ Login ဝင်ပါ။"); return; }
+        if (!pid || !sid) { alert("❌ Player ID နှင့် Server ID နှစ်ခုလုံး ဖြည့်ပါ။"); return; }
+        if (!isValidMLBBFormat(pid, sid)) {
+            alert("❌ ID ပုံစံမှားနေပါသည်။\n(Player ID: 8-10 ဂဏန်း, Server ID: 4 ဂဏန်း)");
+            return;
+        }
+        if (selectedItemPrice === 0) { alert("❌ Package ကို အရင်ရွေးချယ်ပါ။"); return; }
+
+        if (!isIDValid) {
+            const confirmSkip = confirm(`⚠️ ID ကို စစ်ဆေးထားခြင်း မရှိသေးပါ။
+
+🆔 Player ID: ${pid}
+🔢 Server ID: ${sid}
+
+မှားယွင်းပါက ပြန်မရနိုင်ပါ။
+ဆက်လက်ဝယ်ယူမလား?`);
+            if (!confirmSkip) return;
+        }
+
+        const itemType = selectedItemType === 'pass' ? 'Pass' : selectedItemType === 'double' ? '2× Diamonds' : 'Diamonds';        const confirmMsg = `💎 MLBB ${itemType} ဝယ်ယူမည်
+
+🆔 Player ID: ${pid} (${sid})
+📦 Package: ${selectedItemName}
+💰 ဈေးနှုန်း: ${selectedItemPrice.toLocaleString()} Ks
+🎰 ဝယ်ယူမှုအောင်မြင်ပါက: Spin 1 ကြိမ် အခမဲ့ ရရှိမည်
+
+✅ အတည်ပြုဝယ်ယူမလား?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '';
+
+        try {
+            await updateBalance(currentUser.id, -selectedItemPrice);
+
+            const { error: purchaseError } = await supabase
+                .from('purchases')
+                .insert([{
+                    user_id: currentUser.id,
+                    game_name: "Mobile Legends",
+                    player_id: `${pid} (${sid})`,
+                    item_name: selectedItemName,
+                    price: selectedItemPrice,
+                    status: "pending",
+                    time: new Date().toISOString(),
+                    buyer_uid: currentUser.id,
+                    buyer_email: currentUser.email,
+                    item_type: selectedItemType
+                }]);
+
+            if (purchaseError) throw purchaseError;
+
+            await sendToAdmin({
+                playerID: pid,
+                serverID: sid,
+                uid: currentUser.id,
+                email: currentUser.email,
+                item: selectedItemName,
+                price: selectedItemPrice,
+                itemType: selectedItemType
+            });
+
+            alert(`🎉 ဝယ်ယူမှု အောင်မြင်ပါပြီ!
+
+🎰 ဂုဏ်ပြုအနေဖြင့် Lucky Spin 1 ကြိမ် အခမဲ့ ရရှိပါပြီ!
+
+Admin မှ ၅-၁၅ မိနစ်အတွင်း ${itemType} ကို ဖြည့်ဆည်းပေးပါလိမ့်မယ်။
+ကျေးဇူးတင်ပါတယ်။ 🙏`);
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            let msg = "❌ အဆင်မပြေဖြစ်နေပါသည်။";
+            if (error.message?.includes("balance") || error.message?.includes("လက်ကျန်")) {
+                msg = "လက်ကျန်ငွေ မလုံလောက်ပါ။";
+            } else if (error.message?.includes("network")) {
+                msg = "📶 အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ။";
+            }
+            alert(msg + "\n\nပြဿနာရှိပါက Admin ထံ ဆက်သွယ်ပါ။");
+        } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်';
+        }
+    };
+
+    // ⌨️ Enter Key Support
+    document.getElementById('server-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (!isIDValid) checkMLBBID();
+            else if (selectedItemPrice > 0) processPurchase();
+        }
+    });
+</script>
+
+</body>
+</html>

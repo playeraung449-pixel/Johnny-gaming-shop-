@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>♟️ Magic Chess - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #4b0082, #6a11cb);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #9d4edd; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; display: flex; align-items: center; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+
+        /* ♟️ Magic Chess Banner */
+        .chess-banner {
+            background: linear-gradient(135deg, #6a11cb 0%, #9d4edd 100%);
+            border-radius: 20px; padding: 20px; color: white; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 8px 25px rgba(106,17,203,0.4);
+            position: relative; overflow: hidden;
+        }
+        .chess-banner::before {
+            content: '♟️'; position: absolute; font-size: 70px; opacity: 0.15;
+            top: -15px; right: -10px; animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .chess-banner h2 { margin: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
+        .chess-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.95; }
+
+        /* 📦 Input Group */
+        .input-group {
+            background: #16213e; padding: 18px; border-radius: 16px;
+            margin-bottom: 20px; border: 1px solid #2a2a4a;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }        .input-label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #9d4edd; }
+        .id-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .chess-input {
+            flex: 1; padding: 12px; border: 1px solid #2a2a4a;
+            background: #1a1a2e; color: white; border-radius: 10px; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .chess-input:focus { border-color: #9d4edd; box-shadow: 0 0 0 3px rgba(157,78,221,0.2); }
+        .chess-input::placeholder { color: rgba(255,255,255,0.5); }
+        .chess-input.valid { border-color: #28a745; }
+        .chess-input.invalid { border-color: #dc3545; }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #6a11cb, #9d4edd); color: white;
+            border: none; padding: 12px 16px; border-radius: 10px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .check-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(106,17,203,0.4); }
+        .check-btn:disabled { background: #555; cursor: not-allowed; }
+        .check-btn.checking::after {
+            content: ''; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .copy-btn {
+            background: rgba(157,78,221,0.2); color: #9d4edd; border: none;
+            padding: 10px; border-radius: 8px; font-size: 12px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #9d4edd; color: white; }
+        .copy-btn.copied { background: #28a745; color: white; }
+        
+        .input-hint { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.5; }
+        .input-hint b { color: #9d4edd; }
+        
+        /* ✅/❌ Status Indicator */
+        .status-badge {
+            display: none; align-items: center; gap: 6px; padding: 8px 12px;
+            border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .status-badge.show { display: flex; }
+        .status-valid { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-invalid { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 📦 Package Section */
+        .section-label { font-weight: 600; margin: 25px 0 12px; display: block; color: #9d4edd; font-size: 15px; }        
+        /* 🔀 Category Tabs */
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 8px 14px; background: rgba(157,78,221,0.1); border: 1px solid rgba(157,78,221,0.3);
+            border-radius: 20px; color: #9d4edd; font-size: 11px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+        }
+        .tab-btn:hover, .tab-btn.active { background: #9d4edd; color: white; border-color: #9d4edd; }
+        
+        /* 🔍 Search Box */
+        .search-box {
+            width: 100%; padding: 10px 12px 10px 35px; border: 1px solid #2a2a4a;
+            background: #1a1a2e; color: white; border-radius: 10px; font-size: 13px;
+            margin-bottom: 12px; display: none;
+        }
+        .search-box.show { display: block; }
+        .search-box::placeholder { color: rgba(255,255,255,0.5); }
+        .search-icon { position: relative; left: 12px; color: rgba(255,255,255,0.5); }
+
+        /* 📦 Items Grid */
+        .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .items-grid::-webkit-scrollbar { width: 4px; }
+        .items-grid::-webkit-scrollbar-thumb { background: rgba(157,78,221,0.5); border-radius: 2px; }
+        
+        .item-card {
+            background: #16213e; padding: 12px 10px; border-radius: 12px;
+            border: 2px solid #2a2a4a; cursor: pointer; text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .item-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(157,78,221,0.3); }
+        .item-card.selected { 
+            border-color: #9d4edd; background: #1a1a3e; 
+            box-shadow: 0 0 0 3px rgba(157,78,221,0.2);
+        }
+        .item-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #6a11cb, #9d4edd); opacity: 0; transition: opacity 0.2s;
+        }
+        .item-card.selected::before { opacity: 1; }
+        
+        .item-icon { font-size: 20px; margin-bottom: 5px; display: block; }
+        .item-name { font-weight: 700; font-size: 13px; color: white; display: block; margin-bottom: 2px; }
+        .item-price { font-size: 11px; color: #9d4edd; font-weight: 600; }
+        .item-badge {
+            background: linear-gradient(135deg, #6a11cb, #9d4edd); color: white;
+            padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: bold;
+            margin-top: 5px; display: inline-block;        }
+        .item-badge.pass { background: linear-gradient(135deg, #fd79a8, #e84393); color: white; }
+        .item-badge.best { background: linear-gradient(135deg, #fdcb6e, #f39c12); color: #112240; }
+        .item-badge.elite { background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white; }
+        .item-badge.ultimate { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #112240; }
+
+        /* 🔘 Buy Button */
+        .buy-btn {
+            width: 100%; background: linear-gradient(135deg, #00A651, #00c853);
+            color: white; border: none; padding: 16px; border-radius: 30px;
+            font-size: 17px; font-weight: 600; margin-top: 25px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,166,81,0.4); transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,166,81,0.5); }
+        .buy-btn:active:not(:disabled) { transform: translateY(1px); }
+        .buy-btn:disabled { 
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7;
+        }
+        .buy-btn.loading { pointer-events: none; }
+        .buy-btn.loading::after {
+            content: ''; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* ⚠️ Warning Box */
+        .warning-box {
+            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
+            padding: 12px 15px; border-radius: 0 10px 10px 0; margin: 20px 0;
+            font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5;
+        }
+        .warning-box i { margin-right: 6px; color: #FFC107; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .chess-banner { padding: 16px; }
+            .items-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 350px; }
+            .item-card { padding: 10px 8px; }
+            .item-name { font-size: 12px; }
+            .item-price { font-size: 10px; }
+            .id-row { flex-direction: column; }
+            .check-btn, .copy-btn { width: 100%; justify-content: center; }
+            .category-tabs { gap: 6px; }
+            .tab-btn { padding: 7px 12px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">♟️ Magic Chess GoGo</div>
+</div>
+
+<div class="container">
+    <!-- ♟️ Banner -->
+    <div class="chess-banner">
+        <h2><i class="fas fa-chess-knight"></i> Magic Chess</h2>
+        <p>မိတ်ဆွေရဲ့ MLBB အကောင့်ထဲကို ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရောက်ရှိစေရန် 🚀</p>
+    </div>
+
+    <!-- ⚠️ Warning -->
+    <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <b>သတိပြုရန်:</b> Magic Chess အတွက် **MLBB Player ID** ကိုသာ အသုံးပြုပါ။ 
+        မှားယွင်းပါက ပစ္စည်းပြန်လည်ပို့ဆောင်ပေးနိုင်မည် မဟုတ်ပါ။
+    </div>
+
+    <!-- 👤 ID Input + Check -->
+    <div class="input-group">
+        <label class="input-label">🆔 MLBB Player ID & Server ID</label>
+        <div class="id-row">
+            <input type="number" id="player-id" class="chess-input" placeholder="Player ID (ဥပမာ: 123456789)" autocomplete="off">
+            <input type="number" id="server-id" class="chess-input" placeholder="Server (ဥပမာ: 8021)" style="flex:0.6">
+        </div>
+        <div style="display:flex;gap:8px">
+            <button class="check-btn" id="checkBtn" onclick="checkChessID()">
+                <i class="fas fa-search"></i> စစ်ဆေးမည်
+            </button>
+            <button class="copy-btn" onclick="copyIDs()">📋 Copy</button>
+        </div>
+        <p class="input-hint">
+            * <b>Player ID:</b> 8-10 digit numeric<br>
+            * <b>Server ID:</b> 4 digit numeric<br>
+            * ✅ "စစ်ဆေးမည်" ကို နှိပ်ပြီး ပုံစံမှန်/မှား အရင်စစ်ပါ
+        </p>
+        <!-- Status Badge -->
+        <div class="status-badge" id="status-badge">
+            <span id="status-icon"></span>
+            <span id="status-text"></span>
+        </div>
+    </div>
+
+    <!-- 📦 Package Selection -->
+    <label class="section-label">📦 ပစ္စည်းရွေးချယ်ပါ</label>
+    
+    <!-- Category Filter Tabs -->
+    <div class="category-tabs">        <button class="tab-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="tab-btn" onclick="filterCategory('pass', this)">🎫 Pass</button>
+        <button class="tab-btn" onclick="filterCategory('diamonds', this)">💎 Diamonds</button>
+    </div>
+    
+    <!-- Search Box (for Diamonds category) -->
+    <div style="position:relative">
+        <i class="fas fa-search search-icon" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:1"></i>
+        <input type="text" class="search-box" id="package-search" placeholder="🔍 Diamond amount ရှာဖွေရန်..." oninput="filterPackages(this.value)">
+    </div>
+    
+    <div class="items-grid" id="packages-grid">
+        <!-- 🎫 Category 1: Magic Chess Pass -->
+        <div class="item-card" onclick="selectItem(this, 'Weekly Pass', 8200, 'pass')" data-type="pass" data-search="weekly pass 8200">
+            <span class="item-icon">🎫</span>
+            <span class="item-name">Weekly Pass</span>
+            <span class="item-price">8,200 Ks</span>
+            <span class="item-badge pass">7 Days</span>
+        </div>
+        
+        <!-- 💎 Category 2: Diamonds -->
+        <div class="item-card" onclick="selectItem(this, '85 Diamonds', 5900, 'diamonds')" data-type="diamonds" data-search="85 diamonds 5900">
+            <span class="item-icon">💎</span>
+            <span class="item-name">85</span>
+            <span class="item-price">5,900 Ks</span>
+            <span class="item-badge">Starter</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '170 Diamonds', 11700, 'diamonds')" data-type="diamonds" data-search="170 diamonds 11700">
+            <span class="item-icon">💎</span>
+            <span class="item-name">170</span>
+            <span class="item-price">11,700 Ks</span>
+            <span class="item-badge">Popular</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '257 Diamonds', 17800, 'diamonds')" data-type="diamonds" data-search="257 diamonds 17800">
+            <span class="item-icon">💎</span>
+            <span class="item-name">257</span>
+            <span class="item-price">17,800 Ks</span>
+            <span class="item-badge">Value</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '344 Diamonds', 24000, 'diamonds')" data-type="diamonds" data-search="344 diamonds 24000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">344</span>
+            <span class="item-price">24,000 Ks</span>
+            <span class="item-badge">Pro</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '516 Diamonds', 35000, 'diamonds')" data-type="diamonds" data-search="516 diamonds 35000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">516</span>
+            <span class="item-price">35,000 Ks</span>
+            <span class="item-badge best">Best</span>        </div>
+        <div class="item-card" onclick="selectItem(this, '706 Diamonds', 46000, 'diamonds')" data-type="diamonds" data-search="706 diamonds 46000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">706</span>
+            <span class="item-price">46,000 Ks</span>
+            <span class="item-badge elite">Elite</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1346 Diamonds', 87000, 'diamonds')" data-type="diamonds" data-search="1346 diamonds 87000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">1,346</span>
+            <span class="item-price">87,000 Ks</span>
+            <span class="item-badge elite">Premium 🏆</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1825 Diamonds', 115000, 'diamonds')" data-type="diamonds" data-search="1825 diamonds 115000">
+            <span class="item-icon">💎</span>
+            <span class="item-name">1,825</span>
+            <span class="item-price">115,000 Ks</span>
+            <span class="item-badge ultimate">Ultimate 👑</span>
+        </div>
+    </div>
+
+    <!-- 🔘 Buy Button -->
+    <button class="buy-btn" id="buyBtn" onclick="processPurchase()">
+        <i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်
+    </button>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let selectedItemName = "";
+    let selectedItemPrice = 0;
+    let selectedItemType = "diamonds";
+    let currentUser = null;
+    let isIDValid = false;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            setTimeout(() => { window.location.href = "login.html"; }, 1000);
+            return;
+        }
+        
+        currentUser = session.user;
+    }
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+
+    // 📦 Item Selection
+    window.selectItem = (el, name, price, type) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItemName = name;
+        selectedItemPrice = price;
+        selectedItemType = type;
+    };
+
+    // 🔀 Filter by Category Tab
+    window.filterCategory = (category, btn) => {
+        // Update active tab
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show/hide search box for diamonds category
+        const searchBox = document.getElementById('package-search');
+        searchBox.classList.toggle('show', category === 'diamonds');
+        if (category !== 'diamonds') searchBox.value = '';
+        
+        // Show/hide items
+        document.querySelectorAll('.item-card').forEach(card => {
+            if (category === 'all' || card.dataset.type === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+
+    // 🔍 Search within Diamonds Category
+    window.filterPackages = (query) => {
+        const q = query.toLowerCase().trim();
+        document.querySelectorAll('.item-card[data-type="diamonds"]').forEach(card => {
+            const search = card.dataset.search || '';
+            card.style.display = search.includes(q) ? 'block' : 'none';        });
+    };
+
+    // 📋 Copy IDs
+    window.copyIDs = async () => {
+        const pid = document.getElementById('player-id').value.trim();
+        const sid = document.getElementById('server-id').value.trim();
+        const btn = document.querySelector('.copy-btn');
+        
+        if (!pid || !sid) { alert("ID နှစ်ခုလုံး ဖြည့်ပါ"); return; }
+        
+        try {
+            await navigator.clipboard.writeText(`${pid} (${sid})`);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) { alert("Copy မရပါ။ ကိုယ်တိုင် ကူးယူပါ။"); }
+    };
+
+    // 🔍 Validate MLBB ID Format (Magic Chess uses same ID system)
+    function isValidChessFormat(pid, sid) {
+        const pidRegex = /^\d{8,10}$/;
+        const sidRegex = /^\d{4}$/;
+        return pidRegex.test(pid) && sidRegex.test(sid);
+    }
+
+    // 🌐 Check ID (Format Validation)
+    async function checkChessID() {
+        const pidInput = document.getElementById('player-id');
+        const sidInput = document.getElementById('server-id');
+        const checkBtn = document.getElementById('checkBtn');
+        const badge = document.getElementById('status-badge');
+        
+        const pid = pidInput.value.trim();
+        const sid = sidInput.value.trim();
+        
+        // Clear previous state
+        pidInput.classList.remove('valid', 'invalid');
+        sidInput.classList.remove('valid', 'invalid');
+        badge.classList.remove('show', 'status-valid', 'status-invalid');
+        isIDValid = false;
+
+        if (!pid || !sid) {
+            showStatus('❌', 'ID နှစ်ခုလုံး ဖြည့်ပါ', 'invalid');
+            if (!pid) pidInput.focus(); else sidInput.focus();
+            return;
+        }
+
+        if (!isValidChessFormat(pid, sid)) {            showStatus('❌', 'ID ပုံစံမှားနေပါသည်', 'invalid');
+            if (!/^\d{8,10}$/.test(pid)) pidInput.classList.add('invalid');
+            if (!/^\d{4}$/.test(sid)) sidInput.classList.add('invalid');
+            return;
+        }
+
+        // 🔄 Loading state
+        checkBtn.disabled = true;
+        checkBtn.classList.add('checking');
+        checkBtn.innerHTML = '';
+
+        try {
+            // ✅ Format is valid
+            isIDValid = true;
+            showStatus('✅', 'ID ပုံစံမှန်ကန်ပါသည် ✓', 'valid');
+            pidInput.classList.add('valid');
+            sidInput.classList.add('valid');
+            
+        } catch (error) {
+            console.warn("ID Check Error:", error);
+            showStatus('⚠️', 'Format မှန်ကန်ပါသည်', 'valid');
+            pidInput.classList.add('valid');
+            sidInput.classList.add('valid');
+            isIDValid = true;
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.classList.remove('checking');
+            checkBtn.innerHTML = '<i class="fas fa-search"></i> စစ်ဆေးမည်';
+        }
+    }
+
+    // 🎨 Show Status Badge
+    function showStatus(icon, text, type) {
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        statusIcon.textContent = icon;
+        statusText.textContent = text;
+        badge.className = `status-badge show status-${type}`;
+    }
+
+    // 🤖 Send to Telegram Admin (WITH UID)
+    async function sendToAdmin(details) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+        
+        const itemType = details.itemType === 'pass' ? '🎫 Pass' : '💎 Diamonds';
+        
+        const message = `♟️ *MAGIC CHESS ORDER*
+━━━━━━━━━━━━━━━━━━
+📊 *Type:* ${itemType}
+🆔 *Player ID:* ${details.playerID}
+👤 *User UID:* ${details.uid}
+📧 *Buyer Email:* ${details.email}
+🎁 *Package:* ${details.item}
+💰 *Price:* ${details.price.toLocaleString()} Ks
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ ချက်ချင်း စစ်ဆေးပြီး ပစ္စည်းဖြည့်ပေးပါရန် 🚀
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Telegram API Error:", e); }
+    }
+
+    // 💰 Update Balance (Supabase Version)
+    async function updateBalance(uid, amountChange) {
+        // Get current balance
+        const {  userData, error: fetchError } = await supabase
+            .from('users')
+            .select('balance, total_spent, spin_count')
+            .eq('id', uid)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const newBalance = (userData.balance || 0) + amountChange;
+        const newTotalSpent = (userData.total_spent || 0) + (amountChange < 0 ? -amountChange : 0);
+        const newSpinCount = (userData.spin_count || 0) + (amountChange < 0 ? 1 : 0); // Free spin on purchase
+
+        // Update with new values
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+                balance: newBalance,
+                total_spent: newTotalSpent,
+                spin_count: newSpinCount
+            })
+            .eq('id', uid);
+        if (updateError) throw updateError;
+    }
+
+    // 🛒 Purchase Process (Supabase Version)
+    window.processPurchase = async () => {
+        const btn = document.getElementById('buyBtn');
+        const pid = document.getElementById('player-id').value.trim();
+        const sid = document.getElementById('server-id').value.trim();
+
+        // ✅ Validation
+        if (!currentUser) { alert("ကျေးဇူးပြု၍ Login ဝင်ပါ။"); return; }
+        if (!pid || !sid) { alert("❌ Player ID နှင့် Server ID နှစ်ခုလုံး ဖြည့်ပါ။"); return; }
+        if (!isValidChessFormat(pid, sid)) {
+            alert("❌ ID ပုံစံမှားနေပါသည်။\n(Player ID: 8-10 ဂဏန်း, Server ID: 4 ဂဏန်း)");
+            return;
+        }
+        if (selectedItemPrice === 0) { alert("❌ ပစ္စည်းကို အရင်ရွေးချယ်ပါ။"); return; }
+
+        // ⚠️ Warning if not checked
+        if (!isIDValid) {
+            const confirmSkip = confirm(`⚠️ ID ကို စစ်ဆေးထားခြင်း မရှိသေးပါ။
+
+🆔 Player ID: ${pid}
+🔢 Server ID: ${sid}
+
+မှားယွင်းပါက ပစ္စည်းပြန်မရနိုင်ပါ။
+ဆက်လက်ဝယ်ယူမလား?`);
+            if (!confirmSkip) return;
+        }
+
+        // 🔒 Confirm Dialog with Spin Bonus
+        const itemType = selectedItemType === 'pass' ? 'Pass' : 'Diamonds';
+        const confirmMsg = `♟️ Magic Chess ${itemType} ဝယ်ယူမည်
+
+🆔 Player ID: ${pid} (${sid})
+📦 Package: ${selectedItemName}
+💰 ဈေးနှုန်း: ${selectedItemPrice.toLocaleString()} Ks
+🎰 ဝယ်ယူမှုအောင်မြင်ပါက: Spin 1 ကြိမ် အခမဲ့ ရရှိမည်
+
+✅ အတည်ပြုဝယ်ယူမလား?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        // 🔄 Loading State
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '';
+
+        try {            // 💰 Check balance and deduct + update stats + free spin
+            await updateBalance(currentUser.id, -selectedItemPrice);
+
+            // 📝 Save Purchase Record to 'purchases' table
+            const { error: purchaseError } = await supabase
+                .from('purchases')
+                .insert([{
+                    user_id: currentUser.id,
+                    game_name: "Magic Chess",
+                    player_id: `${pid} (${sid})`,
+                    item_name: selectedItemName,
+                    price: selectedItemPrice,
+                    status: "pending",
+                    time: new Date().toISOString(),
+                    buyer_uid: currentUser.id,
+                    buyer_email: currentUser.email,
+                    item_type: selectedItemType // 'pass' or 'diamonds'
+                }]);
+
+            if (purchaseError) throw purchaseError;
+
+            // 🤖 Notify Admin via Telegram (WITH UID)
+            await sendToAdmin({
+                playerID: `${pid} (${sid})`,
+                uid: currentUser.id,
+                email: currentUser.email,
+                item: selectedItemName,
+                price: selectedItemPrice,
+                itemType: selectedItemType
+            });
+
+            // ✅ Success with Spin Notification
+            alert(`🎉 ဝယ်ယူမှု အောင်မြင်ပါပြီ!
+
+🎰 ဂုဏ်ပြုအနေဖြင့် Lucky Spin 1 ကြိမ် အခမဲ့ ရရှိပါပြီ!
+
+Admin မှ ၅-၁၅ မိနစ်အတွင်း ${itemType} ကို ဖြည့်ဆည်းပေးပါလိမ့်မယ်။
+
+ကျေးဇူးတင်ပါတယ်။ 🙏`);
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            let msg = "❌ အဆင်မပြေဖြစ်နေပါသည်။";
+            if (error.message?.includes("balance") || error.message?.includes("လက်ကျန်")) {
+                msg = "လက်ကျန်ငွေ မလုံလောက်ပါ။";
+            } else if (error.message?.includes("network")) {
+                msg = "📶 အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ။";
+            }
+            alert(msg + "\n\nပြဿနာရှိပါက Admin ထံ ဆက်သွယ်ပါ။");        } finally {
+            // 🔁 Reset Button
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်';
+        }
+    };
+
+    // ⌨️ Enter Key Support
+    document.getElementById('server-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (!isIDValid) checkChessID();
+            else if (selectedItemPrice > 0) processPurchase();
+        }
+    });
+</script>
+
+</body>
+</html>

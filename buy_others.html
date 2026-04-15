@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌐 Other Services - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 20px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #00152b, #002d5a);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #00AEEF; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #00AEEF; font-size: 24px; display: flex; align-items: center; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+
+        /* 🔍 Search Bar */
+        .search-box {
+            position: relative; margin: 15px 0;
+        }
+        .search-input {
+            width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px;
+            border: 2px solid rgba(0,174,239,0.3); background: #002d5a;
+            color: white; font-size: 14px; outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: #00AEEF; }
+        .search-icon {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.6); font-size: 14px;
+        }
+
+        /* 📦 Service Card */
+        .service-card {
+            background: #002d5a; border-radius: 16px; padding: 16px;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 15px;
+            border: 2px solid transparent; cursor: pointer;
+            transition: all 0.25s; text-decoration: none; color: white;            position: relative; overflow: hidden;
+        }
+        .service-card:hover {
+            transform: translateY(-3px); border-color: #00AEEF;
+            box-shadow: 0 8px 25px rgba(0,174,239,0.2);
+        }
+        .service-card:active { transform: scale(0.98); }
+        
+        .service-card.coming-soon {
+            opacity: 0.7; cursor: not-allowed; border-style: dashed;
+        }
+        .service-card.coming-soon:hover {
+            transform: none; border-color: #666; box-shadow: none;
+        }
+
+        /* Service Icon */
+        .service-icon {
+            width: 55px; height: 55px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; flex-shrink: 0; position: relative;
+            overflow: hidden;
+        }
+        .service-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .service-icon i { color: white; }
+
+        /* Service Info */
+        .service-info { flex: 1; min-width: 0; }
+        .service-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+        .service-desc { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+        /* Status Badge */
+        .status-badge {
+            padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        .badge-available { background: rgba(40,167,69,0.2); color: #28A745; border: 1px solid #28A745; }
+        .badge-soon { background: rgba(255,193,7,0.2); color: #FFC107; border: 1px solid #FFC107; }
+        .badge-new { background: rgba(23,162,184,0.2); color: #17A2B8; border: 1px solid #17A2B8; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        /* Service-specific colors */
+        .icon-telegram { background: linear-gradient(135deg, #0088cc, #00aaff); }
+        .icon-bigo { background: linear-gradient(135deg, #ffc107, #ff9800); }
+        .icon-netflix { background: linear-gradient(135deg, #e50914, #b20710); }
+        .icon-spotify { background: linear-gradient(135deg, #1db954, #1ed760); }
+        .icon-discord { background: linear-gradient(135deg, #5865f2, #4752c4); }
+        .icon-youtube { background: linear-gradient(135deg, #ff0000, #cc0000); }
+        .icon-steam { background: linear-gradient(135deg, #171a21, #2a475e); }
+        .icon-generic { background: linear-gradient(135deg, #6c757d, #495057); }
+        /* 🔜 Coming Soon Section */
+        .section-title {
+            font-size: 15px; font-weight: 600; color: #00AEEF;
+            margin: 25px 0 12px; padding: 0 5px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-title i { font-size: 13px; }
+
+        .coming-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        }
+        .coming-card {
+            background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px 10px;
+            text-align: center; border: 1px dashed rgba(255,255,255,0.2);
+        }
+        .coming-card i { font-size: 24px; margin-bottom: 8px; opacity: 0.6; }
+        .coming-card span { font-size: 11px; color: rgba(255,255,255,0.7); display: block; }
+
+        /* 💬 Request Service Button */
+        .request-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            color: white; border: none; border-radius: 14px; font-weight: 600; font-size: 14px;
+            margin-top: 25px; cursor: pointer; transition: transform 0.2s;
+        }
+        .request-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(111,66,193,0.4); }
+        .request-btn:active { transform: translateY(1px); }
+
+        /* 📭 Empty State */
+        .empty-state {
+            text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.7);
+        }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; opacity: 0.5; display: block; }
+        .empty-state p { font-size: 14px; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            .service-card { padding: 14px; }
+            .service-icon { width: 50px; height: 50px; font-size: 24px; }
+            .service-name { font-size: 14px; }
+            .coming-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">🌐 Other Services</div></div>
+
+<div class="container">
+    <!-- 🔍 Search -->
+    <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" id="service-search" placeholder="🔍 ဝန်ဆောင်မှုရှာဖွေရန်..." oninput="filterServices(this.value)">
+    </div>
+
+    <!-- ✅ Available Services -->
+    <div id="available-list">
+        <!-- Telegram Premium -->
+        <a href="buy_telegram_premium.html" class="service-card" data-name="telegram premium">
+            <div class="service-icon icon-telegram">
+                <i class="fab fa-telegram-plane"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">Telegram Premium <span class="status-badge badge-new">NEW</span></div>
+                <div class="service-desc">Official Premium Gift • Instant Delivery</div>
+            </div>
+            <span class="status-badge badge-available">Available</span>
+        </a>
+
+        <!-- BIGO Live -->
+        <a href="buy_bigo.html" class="service-card" data-name="bigo live diamonds">
+            <div class="service-icon icon-bigo">
+                <img src="https://logowik.com/content/uploads/images/bigo-live4277.jpg" alt="BIGO">
+            </div>
+            <div class="service-info">
+                <div class="service-name">BIGO Live Diamonds</div>
+                <div class="service-desc">Beans, Gifts, VIP Membership</div>
+            </div>
+            <span class="status-badge badge-available">Available</span>
+        </a>
+
+        <!-- Netflix -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('Netflix')">
+            <div class="service-icon icon-netflix">
+                <i class="fab fa-netflix"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">Netflix Subscription</div>
+                <div class="service-desc">Premium Plans • Shared Account</div>
+            </div>
+            <span class="status-badge badge-soon">Soon</span>
+        </a>
+
+        <!-- Spotify -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('Spotify')">
+            <div class="service-icon icon-spotify">                <i class="fab fa-spotify"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">Spotify Premium</div>
+                <div class="service-desc">Ad-free Music • Offline Mode</div>
+            </div>
+            <span class="status-badge badge-soon">Soon</span>
+        </a>
+
+        <!-- Discord Nitro -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('Discord Nitro')">
+            <div class="service-icon icon-discord">
+                <i class="fab fa-discord"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">Discord Nitro</div>
+                <div class="service-desc">Boost Server • Custom Emoji • HD Stream</div>
+            </div>
+            <span class="status-badge badge-soon">Soon</span>
+        </a>
+
+        <!-- YouTube Premium -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('YouTube Premium')">
+            <div class="service-icon icon-youtube">
+                <i class="fab fa-youtube"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">YouTube Premium</div>
+                <div class="service-desc">No Ads • Background Play • YouTube Music</div>
+            </div>
+            <span class="status-badge badge-soon">Soon</span>
+        </a>
+
+        <!-- Steam Wallet -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('Steam Wallet')">
+            <div class="service-icon icon-steam">
+                <i class="fab fa-steam"></i>
+            </div>
+            <div class="service-info">
+                <div class="service-name">Steam Wallet Code</div>
+                <div class="service-desc">Games, DLC, In-game Items</div>
+            </div>
+            <span class="status-badge badge-soon">Soon</span>
+        </a>
+
+        <!-- Generic / More -->
+        <a href="#" class="service-card coming-soon" onclick="event.preventDefault(); showComingSoon('More Services')">
+            <div class="service-icon icon-generic">
+                <i class="fas fa-ellipsis-h"></i>
+            </div>            <div class="service-info">
+                <div class="service-name">More Services</div>
+                <div class="service-desc">Request your favorite service!</div>
+            </div>
+            <span class="status-badge badge-soon">Request</span>
+        </a>
+    </div>
+
+    <!-- 🔜 Coming Soon Grid (Visual Preview) -->
+    <div class="section-title"><i class="fas fa-clock"></i> မကြာမီ ထပ်ထည့်မည့် ဝန်ဆောင်မှုများ</div>
+    <div class="coming-grid">
+        <div class="coming-card"><i class="fab fa-apple"></i><span>Apple ID</span></div>
+        <div class="coming-card"><i class="fab fa-google-play"></i><span>Play Gift</span></div>
+        <div class="coming-card"><i class="fas fa-gamepad"></i><span>Xbox Live</span></div>
+        <div class="coming-card"><i class="fab fa-twitch"></i><span>Twitch Bits</span></div>
+        <div class="coming-card"><i class="fas fa-music"></i><span>Apple Music</span></div>
+        <div class="coming-card"><i class="fas fa-globe"></i><span>VPN Premium</span></div>
+    </div>
+
+    <!-- 💬 Request Service Button -->
+    <button class="request-btn" onclick="requestService()">
+        <i class="fas fa-plus-circle"></i> ဝန်ဆောင်မှုအသစ် တောင်းဆိုရန်
+    </button>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let currentUser = null;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            // Optional: Redirect to login if needed
+            // window.location.href = "login.html";
+            return;
+        }
+        
+        currentUser = session.user;
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            currentUser = null;        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+
+    // 🔍 Filter Services by Search
+    function filterServices(query) {
+        const q = query.toLowerCase();
+        document.querySelectorAll('.service-card').forEach(card => {
+            const name = card.dataset.name || card.textContent.toLowerCase();
+            card.style.display = name.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // 🔜 Show Coming Soon Alert
+    function showComingSoon(service) {
+        alert(`🔜 ${service} မကြာမီ ရောက်ရှိလာပါမည်!\n\n💡 ဤဝန်ဆောင်မှုကို အမြန်ဆုံး ထည့်သွင်းပေးနိုင်ရန် ကျွန်ုပ်တို့ ကြိုးစားနေပါသည်။\n\n📩 လိုအပ်ချက်ရှိပါက Admin ထံ ဆက်သွယ်နိုင်ပါတယ်။`);
+    }
+
+    // 💬 Request New Service (Supabase Version)
+    async function requestService() {
+        const serviceName = prompt("📝 မိမိလိုအပ်သော ဝန်ဆောင်မှုအမည်ကို ရေးပေးပါ:\n(ဥပမာ: Disney+, Amazon Prime, etc.)");
+        
+        if (serviceName && serviceName.trim()) {
+            try {
+                // ✅ Save to Supabase if user is logged in
+                if (currentUser) {
+                    await supabase.from('service_requests').insert({
+                        user_id: currentUser.id,
+                        service_name: serviceName.trim(),
+                        status: 'pending',
+                        created_at: new Date().toISOString()
+                    });
+                    
+                    // 🤖 Optional: Notify Admin via Telegram
+                    await notifyAdminRequest(serviceName.trim(), currentUser);
+                }
+                
+                alert(`✅ ကျေးဇူးတင်ပါတယ်!\n\n"${serviceName}" ဝန်ဆောင်မှုကို တောင်းဆိုလိုက်ပါပြီ。\n\nAdmin မှ စစ်ဆေးပြီး ရနိုင်မည့် အခြေအနေကို ပြန်လည်အကြောင်းကြားပေးပါမည်။ 🙏`);
+            } catch (error) {
+                console.error("Service request error:", error);
+                // Fallback alert even if save fails
+                alert(`✅ ကျေးဇူးတင်ပါတယ်!\n\n"${serviceName}" ဝန်ဆောင်မှုကို တောင်းဆိုလိုက်ပါပြီ。\n(မှတ်တမ်းသိမ်းရာတွင် အနည်းငယ်အဆင်မပြေ)`);
+            }
+        } else if (serviceName !== null) {
+            alert("⚠️ ဝန်ဆောင်မှုအမည် မဖြည့်ဘဲ မပို့နိုင်ပါ။");        }
+    }
+
+    // 🤖 Optional: Notify Admin via Telegram
+    async function notifyAdminRequest(serviceName, user) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+        
+        const message = `
+📋 *NEW SERVICE REQUEST*
+━━━━━━━━━━━━━━━━━━
+🔹 *Service:* ${serviceName}
+👤 *User UID:* ${user.id}
+📧 *Email:* ${user.email}
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ စစ်ဆေးပြီး ထည့်သွင်းပေးပါရန် 🙏
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) {
+            console.warn("Telegram notify failed:", e);
+        }
+    }
+
+    // ⌨️ Keyboard Support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            document.getElementById('service-search').focus();
+        }
+    });
+
+    // 🎨 Add hover effect for touch devices
+    document.querySelectorAll('.service-card:not(.coming-soon)').forEach(card => {
+        card.addEventListener('touchstart', function() {
+            this.style.transform = 'translateY(-3px)';
+        });
+        card.addEventListener('touchend', function() {
+            this.style.transform = '';
+        });    });
+</script>
+
+</body>
+</html>

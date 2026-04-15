@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔫 PUBG UC - Johnny Gaming Shop</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
+            background: linear-gradient(180deg, #0a192f 0%, #112240 100%);
+            color: #fff; min-height: 100vh; padding-bottom: 30px;
+        }
+
+        /* 🎮 Header */
+        .header {
+            background: linear-gradient(135deg, #112240, #1a365d);
+            padding: 15px 20px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 2px solid #f39c12; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .back-btn { text-decoration: none; color: #fff; font-size: 24px; display: flex; align-items: center; }
+        .header-title { font-size: 17px; font-weight: bold; color: #fff; flex: 1; }
+
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+
+        /* 🔫 PUBG Banner */
+        .pubg-banner {
+            background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+            border-radius: 20px; padding: 20px; color: #112240; text-align: center;
+            margin-bottom: 20px; box-shadow: 0 8px 25px rgba(243,156,18,0.4);
+            position: relative; overflow: hidden;
+        }
+        .pubg-banner::before {
+            content: '🔫'; position: absolute; font-size: 70px; opacity: 0.15;
+            top: -15px; right: -10px; animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .pubg-banner h2 { margin: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; }
+        .pubg-banner p { margin: 8px 0 0; font-size: 13px; opacity: 0.95; font-weight: 600; }
+
+        /* 📦 Input Group */
+        .input-group {
+            background: #112240; padding: 18px; border-radius: 16px;
+            margin-bottom: 20px; border: 1px solid #1f3a5f;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }        .input-label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 14px; color: #f39c12; }
+        .input-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
+        .pubg-input {
+            width: 100%; padding: 12px 12px; border: 1px solid #1f3a5f;
+            background: #0a192f; color: white; border-radius: 10px; font-size: 15px;
+            outline: none; transition: border-color 0.2s; flex: 1;
+        }
+        .pubg-input:focus { border-color: #f39c12; box-shadow: 0 0 0 3px rgba(243,156,18,0.2); }
+        .pubg-input::placeholder { color: rgba(255,255,255,0.5); }
+        .pubg-input.valid { border-color: #28a745; }
+        .pubg-input.invalid { border-color: #dc3545; }
+        
+        .check-btn {
+            background: linear-gradient(135deg, #f39c12, #d35400); color: #112240;
+            border: none; padding: 12px 16px; border-radius: 10px; font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .check-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(243,156,18,0.4); }
+        .check-btn:disabled { background: #555; cursor: not-allowed; color: #888; }
+        .check-btn.checking::after {
+            content: ''; width: 14px; height: 14px; border: 2px solid rgba(17,34,64,0.3);
+            border-top-color: #112240; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .copy-btn {
+            background: rgba(243,156,18,0.2); color: #f39c12; border: none;
+            padding: 12px; border-radius: 10px; font-size: 13px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover { background: #f39c12; color: #112240; }
+        .copy-btn.copied { background: #28a745; color: white; }
+        
+        .input-hint { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.5; }
+        .input-hint b { color: #f39c12; }
+        
+        /* ✅/❌ Status Indicator */
+        .status-badge {
+            display: none; align-items: center; gap: 6px; padding: 8px 12px;
+            border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        .status-badge.show { display: flex; }
+        .status-valid { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+        .status-invalid { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 📦 Package List */
+        .section-label { font-weight: 600; margin: 25px 0 12px; display: block; color: #f39c12; font-size: 15px; }        
+        /* 🔀 Package Tabs */
+        .package-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn {
+            padding: 8px 16px; background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.3);
+            border-radius: 20px; color: #f39c12; font-size: 12px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: all 0.2s;
+        }
+        .tab-btn:hover, .tab-btn.active { background: #f39c12; color: #112240; border-color: #f39c12; }
+        
+        .items-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        
+        .item-card {
+            background: #112240; padding: 14px 12px; border-radius: 14px;
+            border: 2px solid #1f3a5f; cursor: pointer; text-align: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2); transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .item-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(243,156,18,0.3); }
+        .item-card.selected { 
+            border-color: #f39c12; background: #1a365d; 
+            box-shadow: 0 0 0 3px rgba(243,156,18,0.2);
+        }
+        .item-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #f39c12, #d35400); opacity: 0; transition: opacity 0.2s;
+        }
+        .item-card.selected::before { opacity: 1; }
+        
+        .uc-icon { font-size: 24px; margin-bottom: 6px; display: block; }
+        .uc-amount { font-weight: 700; font-size: 14px; color: white; display: block; margin-bottom: 3px; }
+        .uc-price { font-size: 12px; color: #f39c12; font-weight: 600; }
+        .uc-badge {
+            background: linear-gradient(135deg, #f39c12, #d35400); color: #112240;
+            padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: bold;
+            margin-top: 6px; display: inline-block;
+        }
+        .uc-badge.pass { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; }
+        .uc-badge.new { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .uc-badge.elite { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #112240; }
+
+        /* 🔘 Buy Button */
+        .buy-btn {
+            width: 100%; background: linear-gradient(135deg, #f39c12, #d35400);
+            color: #112240; border: none; padding: 16px; border-radius: 30px;
+            font-size: 17px; font-weight: 700; margin-top: 30px; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(243,156,18,0.4); transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .buy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(243,156,18,0.5); }        .buy-btn:active:not(:disabled) { transform: translateY(1px); }
+        .buy-btn:disabled { 
+            background: #555; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; color: #888;
+        }
+        .buy-btn.loading { pointer-events: none; }
+        .buy-btn.loading::after {
+            content: ''; width: 18px; height: 18px; border: 2px solid rgba(17,34,64,0.3);
+            border-top-color: #112240; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* ⚠️ Warning Box */
+        .warning-box {
+            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
+            padding: 12px 15px; border-radius: 0 10px 10px 0; margin: 20px 0;
+            font-size: 12px; color: rgba(255,255,255,0.9); line-height: 1.5;
+        }
+        .warning-box i { margin-right: 6px; color: #FFC107; }
+
+        /* 📱 Responsive */
+        @media (max-width: 480px) {
+            .container { padding: 15px; }
+            .pubg-banner { padding: 16px; }
+            .items-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .item-card { padding: 12px 10px; }
+            .uc-amount { font-size: 13px; }
+            .uc-price { font-size: 11px; }
+            .input-wrapper { flex-direction: column; align-items: stretch; }
+            .check-btn, .copy-btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🎮 Header -->
+<div class="header">
+    <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+    <div class="header-title">🔫 PUBG Mobile UC</div>
+</div>
+
+<div class="container">
+    <!-- 🔫 Banner -->
+    <div class="pubg-banner">
+        <h2><i class="fas fa-crosshairs"></i> UC RECHARGE</h2>
+        <p>မိတ်ဆွေရဲ့ PUBG အကောင့်ထဲကို ၅-၁၀ မိနစ်အတွင်း အမြန်ဆုံး ရောက်ရှိစေရန် 🚀</p>
+    </div>
+
+    <!-- ⚠️ Warning -->
+    <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        <b>သတိပြုရန်:</b> Player ID ကို တိကျစွာ ရိုက်ထည့်ပါ။         မှားယွင်းပါက UC ပြန်လည်ပို့ဆောင်ပေးနိုင်မည် မဟုတ်ပါ။
+    </div>
+
+    <!-- 👤 Player ID Input + Check -->
+    <div class="input-group">
+        <label class="input-label">🆔 PUBG Character ID</label>
+        <div class="input-wrapper">
+            <input type="number" id="pubg-id" class="pubg-input" placeholder="Player ID ရိုက်ထည့်ပါ (ဥပမာ: 5123456789)" autocomplete="off">
+            <button class="check-btn" id="checkBtn" onclick="checkPubgID()">
+                <i class="fas fa-search"></i> စစ်ဆေးမည်
+            </button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="copy-btn" onclick="copyPlayerID()">📋 Copy</button>
+        </div>
+        <p class="input-hint">
+            * <b>Format:</b> 9-10 digit numeric ID only (ဂဏန်းသာ)<br>
+            * ✅ "စစ်ဆေးမည်" ကို နှိပ်ပြီး ID ပုံစံမှန်/မှား အရင်စစ်ပါ
+        </p>
+        <!-- Status Badge -->
+        <div class="status-badge" id="status-badge">
+            <span id="status-icon"></span>
+            <span id="status-text"></span>
+        </div>
+    </div>
+
+    <!-- 📦 UC Package Selection -->
+    <label class="section-label">📦 UC Package ရွေးချယ်ပါ</label>
+    
+    <!-- Package Filter Tabs -->
+    <div class="package-tabs">
+        <button class="tab-btn active" onclick="filterPackages('all', this)">All</button>
+        <button class="tab-btn" onclick="filterPackages('uc', this)">UC Only</button>
+        <button class="tab-btn" onclick="filterPackages('pass', this)">Weekly Pass</button>
+    </div>
+    
+    <div class="items-grid" id="packages-grid">
+        <!-- UC Packages -->
+        <div class="item-card" onclick="selectItem(this, '60 UC', 2500, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">60 UC</span>
+            <span class="uc-price">2,500 Ks</span>
+            <span class="uc-badge">Starter</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '120 UC', 8600, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">120 UC</span>
+            <span class="uc-price">8,600 Ks</span>
+            <span class="uc-badge new">New 🔥</span>
+        </div>        <div class="item-card" onclick="selectItem(this, '180 UC', 13000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">180 UC</span>
+            <span class="uc-price">13,000 Ks</span>
+            <span class="uc-badge">Popular</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '325 UC', 22000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">325 UC</span>
+            <span class="uc-price">22,000 Ks</span>
+            <span class="uc-badge">Value</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '325+25 UC', 23500, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">325+25 UC</span>
+            <span class="uc-price">23,500 Ks</span>
+            <span class="uc-badge">Bonus +25</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '445 UC', 30000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">445 UC</span>
+            <span class="uc-price">30,000 Ks</span>
+            <span class="uc-badge">Best</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '660 UC', 45000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">660 UC</span>
+            <span class="uc-price">45,000 Ks</span>
+            <span class="uc-badge">Pro</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '985 UC', 64000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">985 UC</span>
+            <span class="uc-price">64,000 Ks</span>
+            <span class="uc-badge elite">Elite 🏆</span>
+        </div>
+        <div class="item-card" onclick="selectItem(this, '1800 UC', 58000, 'uc')" data-type="uc">
+            <span class="uc-icon">💵</span>
+            <span class="uc-amount">1,800 UC</span>
+            <span class="uc-price">58,000 Ks</span>
+            <span class="uc-badge">Ultimate</span>
+        </div>
+        
+        <!-- Weekly Pass Packages -->
+        <div class="item-card" onclick="selectItem(this, 'Weekly Pass - Basic', 4700, 'pass')" data-type="pass">
+            <span class="uc-icon">🎫</span>
+            <span class="uc-amount">Weekly Pass 1</span>
+            <span class="uc-price">4,700 Ks</span>
+            <span class="uc-badge pass">7 Days</span>
+        </div>        <div class="item-card" onclick="selectItem(this, 'Weekly Pass - Premium', 14400, 'pass')" data-type="pass">
+            <span class="uc-icon">🎫</span>
+            <span class="uc-amount">Weekly Pass 2</span>
+            <span class="uc-price">14,400 Ks</span>
+            <span class="uc-badge pass">Premium</span>
+        </div>
+    </div>
+
+    <!-- 🔘 Buy Button -->
+    <button class="buy-btn" id="buyBtn" onclick="processPurchase()">
+        <i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်
+    </button>
+</div>
+
+<script>
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let selectedItem = "";
+    let selectedPrice = 0;
+    let selectedItemType = "uc";
+    let currentUser = null;
+    let isIDValid = false;
+
+    // 2️⃣ Auth Check with Supabase
+    async function initAuth() {
+        const {  { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+            setTimeout(() => { window.location.href = "login.html"; }, 1000);
+            return;
+        }
+        
+        currentUser = session.user;
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.location.href = "login.html";
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
+
+    // Initialize
+    initAuth();
+    // 📦 Item Selection
+    window.selectItem = (el, name, price, type) => {
+        document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedItem = name;
+        selectedPrice = price;
+        selectedItemType = type;
+    };
+
+    // 🔀 Filter Packages by Tab
+    window.filterPackages = (type, btn) => {
+        // Update active tab
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show/hide items
+        document.querySelectorAll('.item-card').forEach(card => {
+            if (type === 'all' || card.dataset.type === type) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+
+    // 📋 Copy Player ID
+    window.copyPlayerID = async () => {
+        const input = document.getElementById('pubg-id');
+        const btn = document.querySelector('.copy-btn');
+        const id = input.value.trim();
+        
+        if (!id) { input.focus(); return; }
+        
+        try {
+            await navigator.clipboard.writeText(id);
+            const original = btn.innerHTML;
+            btn.innerHTML = '✓ Copied';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 1500);
+        } catch (e) { alert("Copy မရပါ။ ကိုယ်တိုင် ကူးယူပါ။"); }
+    };
+
+    // 🔍 Validate PUBG Player ID Format
+    function isValidPubgIDFormat(id) {
+        // PUBG IDs are typically 9-10 digit numbers
+        const regex = /^\d{9,10}$/;
+        return regex.test(id);
+    }
+    // 🌐 Check PUBG Player ID
+    async function checkPubgID() {
+        const input = document.getElementById('pubg-id');
+        const checkBtn = document.getElementById('checkBtn');
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        const playerID = input.value.trim();
+        
+        // Clear previous state
+        input.classList.remove('valid', 'invalid');
+        badge.classList.remove('show', 'status-valid', 'status-invalid');
+        isIDValid = false;
+
+        if (!playerID) {
+            showStatus('❌', 'Player ID ရိုက်ထည့်ပါ', 'invalid');
+            input.focus();
+            return;
+        }
+
+        if (!isValidPubgIDFormat(playerID)) {
+            showStatus('❌', 'ID ပုံစံမှားနေပါသည် (ဂဏန်း 9-10 လုံး)', 'invalid');
+            return;
+        }
+
+        // 🔄 Loading state
+        checkBtn.disabled = true;
+        checkBtn.classList.add('checking');
+        checkBtn.innerHTML = '';
+
+        try {
+            // ✅ Format is valid - show success
+            isIDValid = true;
+            showStatus('✅', 'ID ပုံစံမှန်ကန်ပါသည် ✓', 'valid');
+            input.classList.add('valid');
+            
+        } catch (error) {
+            console.warn("PUBG Check Error:", error);
+            showStatus('⚠️', 'Format မှန်ကန်ပါသည်', 'valid');
+            input.classList.add('valid');
+            isIDValid = true;
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.classList.remove('checking');
+            checkBtn.innerHTML = '<i class="fas fa-search"></i> စစ်ဆေးမည်';
+        }
+    }
+
+    // 🎨 Show Status Badge    function showStatus(icon, text, type) {
+        const badge = document.getElementById('status-badge');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        
+        statusIcon.textContent = icon;
+        statusText.textContent = text;
+        badge.className = `status-badge show status-${type}`;
+    }
+
+    // 🤖 Send to Telegram Admin (WITH UID)
+    async function sendAdminNotify(details) {
+        const BOT_TOKEN = "8653967411:AAFfw-0pR8RysuPD6aoSlZ7w7d8XNNs8l_A";
+        const CHAT_ID = "6427719618";
+        
+        const message = `
+🔫 *PUBG UC TOP-UP ORDER*
+━━━━━━━━━━━━━━━━━━
+📊 *ဝန်ဆောင်မှု:* PUBG Mobile ${details.itemType === 'pass' ? 'Weekly Pass' : 'UC'}
+🆔 *Player ID:* ${details.playerID}
+👤 *User UID:* ${details.uid}
+📧 *Buyer Email:* ${details.email}
+💎 *Package:* ${details.item}
+💰 *Price:* ${details.price.toLocaleString()} Ks
+⏰ *Time:* ${new Date().toLocaleString('my-MM', { timeZone: 'Asia/Yangon' })}
+━━━━━━━━━━━━━━━━━━
+✅ Admin မှ ချက်ချင်း စစ်ဆေးပြီး ${details.itemType === 'pass' ? 'Weekly Pass' : 'UC'} ဖြည့်ပေးပါရန် 🚀
+        `.trim();
+
+        try {
+            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (e) { console.error("Telegram API Error:", e); }
+    }
+
+    // 💰 Helper: Update Balance (Supabase Version)
+    async function updateBalance(uid, amountChange) {
+        // Get current balance
+        const {  userData, error: fetchError } = await supabase
+            .from('users')
+            .select('balance, total_spent, spin_count')
+            .eq('id', uid)
+            .single();
+        if (fetchError) throw fetchError;
+
+        const newBalance = (userData.balance || 0) + amountChange;
+        const newTotalSpent = (userData.total_spent || 0) + (amountChange < 0 ? -amountChange : 0);
+        const newSpinCount = (userData.spin_count || 0) + (amountChange < 0 ? 1 : 0); // Free spin on purchase
+
+        // Update with new values
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ 
+                balance: newBalance,
+                total_spent: newTotalSpent,
+                spin_count: newSpinCount
+            })
+            .eq('id', uid);
+
+        if (updateError) throw updateError;
+    }
+
+    // 🛒 Purchase Process (Supabase Version)
+    window.processPurchase = async () => {
+        const btn = document.getElementById('buyBtn');
+        const playerID = document.getElementById('pubg-id').value.trim();
+
+        // ✅ Validation
+        if (!currentUser) { alert("ကျေးဇူးပြု၍ Login ဝင်ပါ။"); return; }
+        if (!playerID) { alert("❌ PUBG Player ID ကို ရိုက်ထည့်ပါ။"); return; }
+        if (!isValidPubgIDFormat(playerID)) {
+            alert("❌ Player ID ပုံစံမှားနေပါသည်။\n(ဂဏန်း 9-10 လုံးသာ ဖြစ်ရမည်)");
+            return;
+        }
+        if (selectedPrice === 0) { alert("❌ UC Package ကို အရင်ရွေးချယ်ပါ။"); return; }
+
+        // ⚠️ Warning if not checked
+        if (!isIDValid) {
+            const confirmSkip = confirm(`⚠️ Player ID ကို စစ်ဆေးထားခြင်း မရှိသေးပါ။
+
+🆔 ရိုက်ထည့်ထားသော ID: ${playerID}
+
+မှားယွင်းပါက ${selectedItemType === 'pass' ? 'Weekly Pass' : 'UC'} ပြန်မရနိုင်ပါ။
+ဆက်လက်ဝယ်ယူမလား?`);
+            if (!confirmSkip) return;
+        }
+
+        // 🔒 Confirm Dialog with Spin Bonus
+        const confirmMsg = `🔫 PUBG ${selectedItemType === 'pass' ? 'Weekly Pass' : 'UC'} ဝယ်ယူမည်
+
+🆔 လက်ခံမည့် Player ID: ${playerID}
+📦 Package: ${selectedItem}💰 ဈေးနှုန်း: ${selectedPrice.toLocaleString()} Ks
+🎰 ဝယ်ယူမှုအောင်မြင်ပါက: Spin 1 ကြိမ် အခမဲ့ ရရှိမည်
+
+✅ အတည်ပြုဝယ်ယူမလား?`;
+        
+        if (!confirm(confirmMsg)) return;
+
+        // 🔄 Loading State
+        btn.classList.add('loading');
+        btn.disabled = true;
+        btn.innerHTML = '';
+
+        try {
+            // 💰 Check balance and deduct + update stats + free spin
+            await updateBalance(currentUser.id, -selectedPrice);
+
+            // 📝 Save Purchase Record to 'purchases' table
+            const { error: purchaseError } = await supabase
+                .from('purchases')
+                .insert([{
+                    user_id: currentUser.id,
+                    game_name: "PUBG Mobile",
+                    player_id: playerID,
+                    item_name: selectedItem,
+                    price: selectedPrice,
+                    status: "pending",
+                    time: new Date().toISOString(),
+                    buyer_uid: currentUser.id,
+                    buyer_email: currentUser.email,
+                    item_type: selectedItemType // 'uc' or 'pass'
+                }]);
+
+            if (purchaseError) throw purchaseError;
+
+            // 🤖 Notify Admin via Telegram (WITH UID)
+            await sendAdminNotify({
+                playerID: playerID,
+                uid: currentUser.id,
+                email: currentUser.email,
+                item: selectedItem,
+                price: selectedPrice,
+                itemType: selectedItemType
+            });
+
+            // ✅ Success with Spin Notification
+            alert(`🎉 ဝယ်ယူမှု အောင်မြင်ပါပြီ!
+
+🎰 ဂုဏ်ပြုအနေဖြင့် Lucky Spin 1 ကြိမ် အခမဲ့ ရရှိပါပြီ!
+
+Admin မှ ၅-၁၅ မိနစ်အတွင်း ${selectedItemType === 'pass' ? 'Weekly Pass' : 'UC'} ကို ဖြည့်ဆည်းပေးပါလိမ့်မယ်။
+ကျေးဇူးတင်ပါတယ်။ 🙏`);
+            window.location.href = "history.html";
+
+        } catch (error) {
+            console.error("Purchase Error:", error);
+            let msg = "❌ အဆင်မပြေဖြစ်နေပါသည်။";
+            if (error.message?.includes("balance") || error.message?.includes("လက်ကျန်")) {
+                msg = "လက်ကျန်ငွေ မလုံလောက်ပါ။";
+            } else if (error.message?.includes("network")) {
+                msg = "📶 အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ။";
+            }
+            alert(msg + "\n\nပြဿနာရှိပါက Admin ထံ ဆက်သွယ်ပါ။");
+        } finally {
+            // 🔁 Reset Button
+            btn.classList.remove('loading');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shopping-cart"></i> ဝယ်ယူမည်';
+        }
+    };
+
+    // ⌨️ Enter Key Support
+    document.getElementById('pubg-id')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (!isIDValid) checkPubgID();
+            else if (selectedPrice > 0) processPurchase();
+        }
+    });
+</script>
+
+</body>
+</html>
