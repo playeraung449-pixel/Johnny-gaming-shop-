@@ -5,308 +5,264 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🔐 Login - Johnny Gaming Shop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS Library -->
+    <!-- Supabase JS Library - MUST load before our script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        
         body {
             font-family: 'Segoe UI', 'Pyidaungsu', sans-serif;
             background: linear-gradient(180deg, #001f3f 0%, #00152b 100%);
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden;
+            color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px;
         }
-
-        /* 🎮 Animated Background Particles */
-        .particles {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; overflow: hidden;
+        .login-container {
+            background: rgba(255,255,255,0.08); border-radius: 20px; padding: 30px;
+            width: 100%; max-width: 400px; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
-        .particle {
-            position: absolute; width: 4px; height: 4px;
-            background: rgba(0,174,239,0.3); border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* 🎴 Login Card */
-        .login-card {
-            background: rgba(255,255,255,0.95); width: 90%; max-width: 400px;
-            padding: 35px 25px; border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center; position: relative; z-index: 10;
-            animation: slideUp 0.4s ease;
-            backdrop-filter: blur(10px);
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 🎮 Logo/Branding */
-        .brand-logo {
-            display: flex; align-items: center; justify-content: center; gap: 10px;            margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(0,174,239,0.2);
-        }        .brand-logo i { font-size: 28px; color: #00AEEF; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .brand-logo span { font-size: 18px; font-weight: bold; color: #0072BC; }
-
-        h2 { color: #0072BC; margin-bottom: 25px; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* 📦 Input Groups */
-        .input-group { margin-bottom: 18px; position: relative; text-align: left; }
-        label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 6px; }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo h1 { font-size: 22px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .logo p { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 5px; }
         
-        .input-wrapper { position: relative; }
-        input {
-            width: 100%; padding: 14px 40px 14px 14px; border: 2px solid #eee;
-            border-radius: 12px; font-size: 15px; box-sizing: border-box; outline: none;
-            transition: all 0.25s; background: #f9fdff;
+        .input-group { margin-bottom: 18px; }
+        .input-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.9); }
+        .input-field {
+            width: 100%; padding: 12px 15px; border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+            color: white; font-size: 14px; outline: none; transition: border-color 0.2s;
         }
-        input:focus { border-color: #00AEEF; background: #fff; box-shadow: 0 0 0 4px rgba(0,174,239,0.1); }
-        input.error { border-color: #dc3545; animation: shake 0.3s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-        /* 👁️ Password Toggle */
-        .toggle-password {
+        .input-field:focus { border-color: #00AEEF; }
+        .input-field::placeholder { color: rgba(255,255,255,0.5); }
+        
+        .password-wrapper { position: relative; }
+        .toggle-pass {
             position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            cursor: pointer; font-size: 18px; color: #888; transition: color 0.2s;
-            padding: 5px; border-radius: 5px;
+            background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer;
+            padding: 5px; font-size: 14px;
         }
-        .toggle-password:hover { color: #00AEEF; background: rgba(0,174,239,0.1); }
-
-        /* 🔐 Password Strength Indicator */
-        .password-strength {
-            height: 4px; background: #eee; border-radius: 2px; margin-top: 8px; overflow: hidden;
+        .toggle-pass:hover { color: #fff; }
+        
+        .login-btn {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #00AEEF, #0072BC);
+            color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-top: 10px;
         }
-        .strength-bar {
-            height: 100%; width: 0%; transition: all 0.3s; border-radius: 2px;
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,174,239,0.4); }        .login-btn:active { transform: translateY(1px); }
+        .login-btn:disabled { background: #555; cursor: not-allowed; transform: none; }
+        
+        .toggle-auth {
+            text-align: center; margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.8);
         }
-        .strength-weak { width: 33%; background: #dc3545; }
-        .strength-medium { width: 66%; background: #ffc107; }
-        .strength-strong { width: 100%; background: #28a745; }
-        .strength-text { font-size: 11px; color: #888; margin-top: 4px; text-align: left; }
-
-        /* 🔘 Submit Button */
-        .btn {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, #0072BC, #00AEEF);
-            color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
-            cursor: pointer; margin-top: 10px; transition: all 0.25s;
-            box-shadow: 0 6px 20px rgba(0,114,188,0.3); position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+        .toggle-auth a { color: #00AEEF; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .toggle-auth a:hover { text-decoration: underline; }
+        
+        .forgot-pass { text-align: right; margin-top: -10px; margin-bottom: 15px; }
+        .forgot-pass a { color: rgba(255,255,255,0.7); font-size: 12px; text-decoration: none; }
+        .forgot-pass a:hover { color: #00AEEF; }
+        
+        .loading {
+            text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.8);
         }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,114,188,0.4); }        .btn:active:not(:disabled) { transform: translateY(1px); }        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn.loading { pointer-events: none; }
-        .btn.loading::after {
-            content: ''; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;
-        }
+        .loading i { font-size: 32px; margin-bottom: 15px; animation: spin 1s linear infinite; display: block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* 🔗 Toggle Form */
-        .toggle-text {
-            margin-top: 25px; font-size: 14px; color: #666; cursor: pointer;
+        
+        .debug-panel {
+            margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.3);
+            border-radius: 10px; font-size: 10px; color: #0f0; font-family: monospace;
+            max-height: 100px; overflow-y: auto; display: none;
         }
-        .toggle-text span { color: #0072BC; font-weight: 600; text-decoration: none; transition: color 0.2s; }
-        .toggle-text span:hover { color: #00AEEF; text-decoration: underline; }
-
-        /* 🔔 Toast Notifications */
-        .toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: white; color: #333; padding: 12px 20px; border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 1000; font-size: 14px;
-            display: flex; align-items: center; gap: 10px; max-width: 90%; text-align: left;
-            transition: transform 0.3s ease; border-left: 4px solid #00AEEF;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        .toast.success { border-left-color: #28a745; }
-        .toast.error { border-left-color: #dc3545; }
-        .toast.warning { border-left-color: #ffc107; }
-        .toast i { font-size: 18px; }
-
-        /* ⚠️ Security Warning */
-        .security-warning {
-            background: rgba(255,193,7,0.15); border-left: 4px solid #FFC107;
-            padding: 10px 15px; border-radius: 0 8px 8px 0; margin: 15px 0;
-            font-size: 11px; color: #856404; text-align: left; line-height: 1.4;
-        }
-        .security-warning i { margin-right: 5px; }
-
-        /* 🌙 Dark Mode Toggle */
-        .theme-toggle {
-            position: absolute; top: 15px; right: 15px; width: 40px; height: 40px;
-            border-radius: 50%; background: rgba(255,255,255,0.9); border: none;
-            font-size: 18px; cursor: pointer; transition: all 0.2s; z-index: 20;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .theme-toggle:hover { transform: scale(1.1); }
-
-        /* 📱 Responsive */
+        .debug-panel.show { display: block; }
+        
         @media (max-width: 480px) {
-            .login-card { padding: 30px 20px; }            .brand-logo span { font-size: 16px; }            h2 { font-size: 18px; }
-        }
-
-        /* 🌓 Dark Mode Styles */
-        body.dark {
-            background: linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 100%);
-        }
-        body.dark .login-card {
-            background: rgba(22,33,62,0.95); color: #fff;
-        }
-        body.dark h2 { color: #00AEEF; }
-        body.dark label { color: rgba(255,255,255,0.8); }
-        body.dark input {
-            background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;
-        }
-        body.dark input:focus { background: rgba(255,255,255,0.15); }
-        body.dark .toggle-text { color: rgba(255,255,255,0.7); }
-        body.dark .security-warning {
-            background: rgba(255,193,7,0.1); color: rgba(255,255,255,0.9);
+            .login-container { padding: 25px 20px; }
+            .logo h1 { font-size: 20px; }
         }
     </style>
 </head>
 <body>
 
-<!-- 🎮 Background Particles -->
-<div class="particles" id="particles"></div>
-
-<!-- 🌙 Theme Toggle -->
-<button class="theme-toggle" onclick="toggleTheme()" title="Dark/Light Mode">
-    <i class="fas fa-moon" id="theme-icon"></i>
-</button>
-
-<!-- 🎴 Login Card -->
-<div class="login-card">
-    <!-- 🎮 Brand Logo -->
-    <div class="brand-logo">
-        <i class="fas fa-gamepad"></i>
-        <span>JOHNNY GAMING SHOP</span>
+<div class="login-container">
+    <div class="logo">
+        <h1><i class="fas fa-gamepad"></i> Johnny Gaming</h1>
+        <p>ဂိမ်းပစ္စည်းများ ဝယ်ယူရန် အကောင့်ဝင်ပါ</p>
     </div>
 
-    <h2 id="form-title">🔐 အကောင့်ဝင်ရန်</h2>
-
-    <!-- ⚠️ Security Warning -->
-    <div class="security-warning">
-        <i class="fas fa-exclamation-triangle"></i>
-        <b>သတိပေးချက်:</b> အကောင့်မေ့သွားပါက Telegram - @Johnny_AZM ကိုဆက်သွယ်ပါ။
+    <!-- 🔧 Debug Panel (Press D to toggle) -->
+    <div class="debug-panel" id="debug-panel">
+        <div id="debug-log">Debug ready...</div>
     </div>
-    
-    <!-- 📧 Email Input -->    <div class="input-group">
-        <label for="email">📧 Email Address</label>        <div class="input-wrapper">
-            <input type="email" id="email" placeholder="example@gmail.com" autocomplete="email" aria-label="Email address">
+
+    <!-- Loading State -->
+    <div class="loading" id="loading" style="display:none">
+        <i class="fas fa-spinner"></i>
+        <p>စစ်ဆေးနေသည်... 🔍</p>
+        <small style="color:rgba(255,255,255,0.5);margin-top:10px;display:block">            (3 စက္ကန့် ကြာရင် အလိုအလျောက် ပြပါမည်)
+        </small>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" style="display:none" onsubmit="event.preventDefault(); doLogin();">
+        <div class="input-group">
+            <label class="input-label">📧 Email Address</label>
+            <input type="email" id="email" class="input-field" placeholder="example@email.com" autocomplete="email">
         </div>
-        <div class="error-msg" id="email-error" style="color:#dc3545;font-size:11px;margin-top:4px;display:none"></div>
-    </div>
-
-    <!-- 🔐 Password Input -->
-    <div class="input-group">
-        <label for="password">🔑 Password</label>
-        <div class="input-wrapper">
-            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" aria-label="Password">
-            <span class="toggle-password" id="togglePassword" onclick="togglePassword()" aria-label="Toggle password visibility">
-                <i class="fas fa-eye"></i>
-            </span>
+        
+        <div class="input-group">
+            <label class="input-label">🔐 Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="password" class="input-field" placeholder="••••••••" autocomplete="current-password">
+                <button type="button" class="toggle-pass" onclick="togglePassword()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
         </div>
-        <!-- Password Strength (Registration only) -->
-        <div id="strength-container" style="display:none">
-            <div class="password-strength"><div class="strength-bar" id="strength-bar"></div></div>
-            <div class="strength-text" id="strength-text"></div>
+        
+        <div class="forgot-pass">
+            <a href="#" onclick="forgotPassword(); return false;">Password မှတ်မိမနေပါ?</a>
         </div>
-        <div class="error-msg" id="password-error" style="color:#dc3545;font-size:11px;margin-top:4px;display:none"></div>
+        
+        <button type="submit" class="login-btn" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i> ဝင်မည်
+        </button>
+    </form>
+
+    <!-- Register Form (Hidden by default) -->
+    <form id="register-form" style="display:none" onsubmit="event.preventDefault(); doRegister();">
+        <div class="input-group">
+            <label class="input-label">📧 Email Address</label>
+            <input type="email" id="reg-email" class="input-field" placeholder="example@email.com" autocomplete="email">
+        </div>
+        
+        <div class="input-group">
+            <label class="input-label">🔐 Password (အနည်းဆုံး 6 စာလုံး)</label>
+            <div class="password-wrapper">
+                <input type="password" id="reg-password" class="input-field" placeholder="••••••••" minlength="6">
+                <button type="button" class="toggle-pass" onclick="toggleRegPassword()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        
+        <button type="submit" class="login-btn" id="register-btn" style="background:linear-gradient(135deg,#28A745,#20C997)">
+            <i class="fas fa-user-plus"></i> အကောင့်ဖွင့်မည်
+        </button>    </form>
+
+    <!-- Toggle Auth Mode -->
+    <div class="toggle-auth">
+        <span id="auth-toggle-text">အကောင့်မရှိသေးပါလား?</span> 
+        <a id="auth-toggle-link" onclick="toggleAuthMode()">အကောင့်ဖွင့်မည်</a>
     </div>
-
-    <!-- 🔘 Submit Button -->
-    <button class="btn" id="main-btn" onclick="handleAuth()">
-        <i class="fas fa-sign-in-alt"></i> Login ဝင်မည်
-    </button>
-
-    <!-- 🔗 Toggle Form -->
-    <div class="toggle-text" onclick="toggleForm()" role="button" tabindex="0">
-        <p id="toggle-p">အကောင့်မရှိသေးပါက? <span id="toggle-link">ဒီမှာဖွင့်ပါ</span></p>
-    </div>
-
-    <!-- 🔗 Forgot Password (Placeholder) -->
-    <div style="margin-top:15px;font-size:13px">
-        <a href="#" onclick="showToast('🔜 မကြာမီ ထည့်သွင်းပေးပါမည်', 'warning')" style="color:#0072BC;text-decoration:none">
-            🔐 Password မေ့သွားပါသလား?
-        </a>
-    </div>
-</div>
-
-<!-- 🔔 Toast Container -->
-<div class="toast" id="toast">
-    <i class="fas fa-info-circle" id="toast-icon"></i>
-    <span id="toast-msg"></span>
 </div>
 
 <script>
-    // 1️⃣ Supabase Configuration
-    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
-    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    let currentUser = null;
-    const loadingEl = document.getElementById('loading');
-    const loginForm = document.getElementById('login-form');
-    const guestContent = document.getElementById('guest-content');
-
-    // 🚀 NON-BLOCKING Auth Check - UI won't freeze!
-    async function initAuth() {
-        // ⏱️ Show loading briefly, but don't block
-        if (loadingEl) loadingEl.style.display = 'flex';
-        
-        try {
-            // ⚡ Use Promise.race with timeout to prevent hanging
-            const timeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('timeout')), 4000)
-            );
-            
-            const {  { session } } = await Promise.race([
-                supabase.auth.getSession(),
-                timeout
-            ]);
-            
-            if (session?.user) {
-                currentUser = session.user;
-                console.log('✅ Logged in:', session.user.email);
-                // Redirect to home if already logged in
-                setTimeout(() => window.location.href = 'index.html', 500);
-            }
-        } catch (error) {
-            console.warn('⚠️ Auth check skipped:', error.message);
-            // Don't block - just continue to show login form
-        } finally {
-            // ✅ Always hide loading and show form, even if auth fails
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (loginForm) loginForm.style.display = 'block';
-            if (guestContent) guestContent.style.display = 'block';
+    // 🔧 DEBUG MODE - Press 'D' key to toggle debug panel
+    let DEBUG = false;
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'd') {
+            DEBUG = !DEBUG;
+            document.getElementById('debug-panel').classList.toggle('show', DEBUG);
+            log('🔧 Debug mode: ' + (DEBUG ? 'ON' : 'OFF'));
+        }
+    });
+    
+    function log(msg) {
+        console.log('[JohnnyGaming]', msg);
+        if (DEBUG) {
+            const panel = document.getElementById('debug-log');
+            panel.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}<br>` + panel.innerHTML;
         }
     }
 
-    // 🔄 Listen for login/logout events
-    supabase.auth.onAuthStateChange((event, session) => {
-        console.log('🔄 Auth event:', event);
-        if (event === 'SIGNED_IN' && session?.user) {
-            currentUser = session.user;
-            window.location.href = 'index.html';        }
-        if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            if (loginForm) loginForm.style.display = 'block';
-        }
+    // 1️⃣ Supabase Configuration
+    const SUPABASE_URL = 'https://jstevikyonzvbslsasth.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    
+    log('🚀 Initializing Supabase...');
+    log(`📍 URL: ${SUPABASE_URL}`);
+    
+    // ✅ Check if Supabase library loaded
+    if (typeof window.supabase === 'undefined') {
+        log('❌ ERROR: Supabase library NOT loaded!');
+        alert('⚠️ System error: Supabase not loaded. Please refresh the page.');
+    }
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    log('✅ Supabase client created');
+
+    let currentUser = null;
+    let isRegisterMode = false;
+
+    // 🚀 NON-BLOCKING Init - Show form immediately!
+    document.addEventListener('DOMContentLoaded', () => {
+        log('📄 DOM loaded');        
+        // ✅ Show login form immediately (don't wait for auth)
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        log('✅ Login form displayed');
+        
+        // 🔍 Check auth in background (won't block UI)
+        checkAuthInBackground();
+        
+        // 🎯 Test button functionality
+        testButtonFunctionality();
     });
 
-    // 🎯 Login Function
+    // 🔍 Background Auth Check (non-blocking)
+    async function checkAuthInBackground() {
+        try {
+            log('🔐 Checking auth session...');
+            const {  { session } } = await supabase.auth.getSession();
+            
+            if (session?.user) {
+                log('✅ User already logged in: ' + session.user.email);
+                currentUser = session.user;
+                setTimeout(() => window.location.href = 'index.html', 300);
+            } else {
+                log('👤 No active session');
+            }
+        } catch (error) {
+            log('⚠️ Auth check error (non-critical): ' + error.message);
+            // Don't block - user can still login manually
+        }
+    }
+
+    // 🎯 Test if buttons work
+    function testButtonFunctionality() {
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        
+        // Add click listeners as backup (in case onclick fails)
+        if (loginBtn) {
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                log('🎯 Login button clicked (event listener)');
+                doLogin();
+            });
+        }
+        if (registerBtn) {
+            registerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                log('🎯 Register button clicked (event listener)');
+                doRegister();            });
+        }
+        log('✅ Button event listeners attached');
+    }
+
+    // 🔐 Login Function
     async function doLogin() {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const btn = document.querySelector('.login-btn');
+        log('🔐 doLogin() called');
+        
+        const email = document.getElementById('email')?.value.trim();
+        const password = document.getElementById('password')?.value;
+        const btn = document.getElementById('login-btn');
         
         if (!email || !password) {
             alert('⚠️ Email နှင့် Password နှစ်ခုလုံး ဖြည့်ပါ');
+            log('❌ Validation failed: empty fields');
             return;
         }
+        
+        log(`📧 Attempting login: ${email}`);
         
         // Loading state
         const originalBtn = btn.innerHTML;
@@ -315,31 +271,43 @@
         
         try {
             const {  user, error } = await supabase.auth.signInWithPassword({
-                email, password
+                email: email,
+                password: password
             });
             
-            if (error) throw error;
+            if (error) {
+                log('❌ Login error: ' + error.message);
+                throw error;
+            }
             
             if (user) {
+                log('✅ Login successful: ' + user.email);
                 currentUser = user;
                 alert('✅ Login အောင်မြင်ပါပြီ! 🎉');
                 window.location.href = 'index.html';
             }
         } catch (err) {
-            console.error('Login error:', err);
+            log('❌ Login exception: ' + err.message);
             let msg = '❌ Login အဆင်မပြေ';
-            if (err.message?.includes('Invalid login')) msg = '❌ Email သို့မဟုတ် Password မှားနေပါသည်';
-            else if (err.message?.includes('Email not confirmed')) msg = '📧 Email အတည်ပြုရန် လိုအပ်ပါသည်';
+            if (err.message?.includes('Invalid login')) {
+                msg = '❌ Email သို့မဟုတ် Password မှားနေပါသည်';
+            } else if (err.message?.includes('Email not confirmed')) {
+                msg = '📧 Email အတည်ပြုရန် လိုအပ်ပါသည်';            }
             alert(msg);
         } finally {
             btn.innerHTML = originalBtn;
             btn.disabled = false;
+            log('🔁 Login button reset');
         }
     }
 
     // 📝 Register Function
     async function doRegister() {
-        const email = document.getElementById('email').value.trim();        const password = document.getElementById('password').value;
+        log('📝 doRegister() called');
+        
+        const email = document.getElementById('reg-email')?.value.trim();
+        const password = document.getElementById('reg-password')?.value;
+        const btn = document.getElementById('register-btn');
         
         if (!email || !password) {
             alert('⚠️ Email နှင့် Password နှစ်ခုလုံး ဖြည့်ပါ');
@@ -350,9 +318,16 @@
             return;
         }
         
+        log(`📧 Attempting register: ${email}`);
+        
+        const originalBtn = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ဖွင့်နေသည်...';
+        btn.disabled = true;
+        
         try {
             const {  user, error } = await supabase.auth.signUp({
-                email, password,
+                email: email,
+                password: password,
                 options: {
                     data: { username: email.split('@')[0] }
                 }
@@ -361,25 +336,66 @@
             if (error) throw error;
             
             if (user) {
+                log('✅ Registration successful, creating user record...');
+                
                 // Create user record in public.users table
-                await supabase.from('users').insert({
-                    id: user.id,
-                    email: email,
-                    username: email.split('@')[0],
-                    balance: 0,
-                    total_spent: 0,
-                    spin_count: 0,
-                    role: 'user'
-                });
+                const { error: dbError } = await supabase
+                    .from('users')
+                    .insert({                        id: user.id,
+                        email: email,
+                        username: email.split('@')[0],
+                        balance: 0,
+                        total_spent: 0,
+                        spin_count: 0,
+                        role: 'user'
+                    });
+                
+                if (dbError) {
+                    log('⚠️ User record creation warning: ' + dbError.message);
+                    // Don't block - auth user created anyway
+                }
                 
                 alert('✅ အကောင့်ဖွင့်ပြီးပါပြီ! 🎉\n\nEmail အတည်ပြုစာ ပို့ထားပါတယ်။\n(ဒါမှမဟုတ်) Admin (@Johnny_AZM) ကို ဆက်သွယ်ပြီး အတည်ပြုခိုင်းပါ။');
+                toggleAuthMode(); // Switch back to login
             }
         } catch (err) {
-            console.error('Register error:', err);
+            log('❌ Register exception: ' + err.message);
             let msg = '❌ အကောင့်ဖွင့်ရာတွင် အဆင်မပြေ';
-            if (err.message?.includes('User already registered')) msg = '⚠️ ဤ Email ဖြင့် အကောင့်ရှိပြီးပါပြီ';
+            if (err.message?.includes('User already registered')) {
+                msg = '⚠️ ဤ Email ဖြင့် အကောင့်ရှိပြီးပါပြီ';
+            }
             alert(msg);
+        } finally {
+            btn.innerHTML = originalBtn;
+            btn.disabled = false;
         }
+    }
+
+    // 🔁 Toggle Login/Register Forms
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        log('🔄 Toggle auth mode: ' + (isRegisterMode ? 'register' : 'login'));
+        
+        document.getElementById('login-form').style.display = isRegisterMode ? 'none' : 'block';
+        document.getElementById('register-form').style.display = isRegisterMode ? 'block' : 'none';
+        
+        document.getElementById('auth-toggle-text').textContent = isRegisterMode ? 'အကောင့်ရှိပြီးပါသလား?' : 'အကောင့်မရှိသေးပါလား?';
+        document.getElementById('auth-toggle-link').textContent = isRegisterMode ? 'ဝင်မည်' : 'အကောင့်ဖွင့်မည်';
+    }
+
+    // 🔐 Toggle Password Visibility
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = input.nextElementSibling.querySelector('i');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        log('👁️ Password visibility toggled');
+    }    
+    function toggleRegPassword() {
+        const input = document.getElementById('reg-password');
+        const icon = input.nextElementSibling.querySelector('i');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
     }
 
     // 🔐 Forgot Password
@@ -388,7 +404,8 @@
         if (!email) return;
         
         try {
-            await supabase.auth.resetPasswordForEmail(email, {                redirectTo: window.location.origin + '/login.html'
+            await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/login.html'
             });
             alert('✅ Password reset link ပို့လိုက်ပါပြီ!\n\nEmail ကို စစ်ဆေးပါ။');
         } catch (err) {
@@ -396,54 +413,30 @@
         }
     }
 
-    // 🚪 Logout
-    async function doLogout() {
-        if (confirm('🚪 Logout လုပ်မလား?')) {
-            await supabase.auth.signOut();
+    // 🎨 Auth State Listener
+    supabase.auth.onAuthStateChange((event, session) => {
+        log(`🔄 Auth state changed: ${event}`);
+        if (event === 'SIGNED_IN' && session?.user) {
+            currentUser = session.user;
+            window.location.href = 'index.html';
+        }
+        if (event === 'SIGNED_OUT') {
             currentUser = null;
-            window.location.href = 'login.html';
         }
-    }
-
-    // 🎨 Toggle Password Visibility
-    function togglePassword() {
-        const input = document.getElementById('password');
-        const icon = document.querySelector('.toggle-pass i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.className = 'fas fa-eye-slash';
-        } else {
-            input.type = 'password';
-            icon.className = 'fas fa-eye';
-        }
-    }
-
-    // 🚀 Initialize - NON-BLOCKING!
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('🎮 Johnny Gaming Shop - Login Loaded');
-        // Start auth check but DON'T wait for it
-        initAuth();
-        
-        // Show form immediately if loading takes too long
-        setTimeout(() => {
-            if (loadingEl && loadingEl.style.display !== 'none') {
-                console.warn('⚠️ Auth timeout - showing form anyway');
-                loadingEl.style.display = 'none';
-                if (loginForm) loginForm.style.display = 'block';
-                if (guestContent) guestContent.style.display = 'block';
-            }
-        }, 3000);
     });
 
     // ⌨️ Enter Key Support
-    document.getElementById('password')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {            // Check if register mode is active
-            const isRegister = document.querySelector('.toggle-auth.active')?.dataset.mode === 'register';
-            if (isRegister) doRegister();
-            else doLogin();
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (isRegisterMode) {
+                doRegister();
+            } else {
+                doLogin();
+            }
         }
     });
+
+    log('🎮 Johnny Gaming Shop login.js loaded');
 </script>
 
-</body>
-</html>
+</body></html>
