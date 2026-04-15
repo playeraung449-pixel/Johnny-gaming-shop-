@@ -242,301 +242,206 @@
 </div>
 
 <script>
-    // ၁။ Supabase Configuration
-    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co'    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG'
-    
-    // Supabase Client ဖန်တီးခြင်း
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+    // 1️⃣ Supabase Configuration
+    const supabaseUrl = 'https://jstevikyonzvbslsasth.supabase.co';
+    const supabaseKey = 'sb_publishable_X4D-3gmE5QM51t9pHUOnGw_K-4CiVVG';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // ၂။ Auth State Check (Login ဝင်ပြီးသားဆိုရင် Page ပြန်မလှည့်အောင် စစ်ဆေးခြင်း)
-    async function checkUser() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            const email = session.user.email;
-            if (email === "playeraung449@gmail.com") {
-                window.location.href = "admin.html";
-            } else {
-                window.location.href = "index.html";
-            }
-        }
-    }
-    checkUser();
+    let currentUser = null;
+    const loadingEl = document.getElementById('loading');
+    const loginForm = document.getElementById('login-form');
+    const guestContent = document.getElementById('guest-content');
 
-    // 🌙 Theme Toggle
-    function toggleTheme() {
-        document.body.classList.toggle('dark');
-        const icon = document.getElementById('theme-icon');
-        const isDark = document.body.classList.contains('dark');
-        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-    // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark');
-        document.getElementById('theme-icon').className = 'fas fa-sun';
-    }
-
-    // 🎮 Background Particles
-    function createParticles() {
-        const container = document.getElementById('particles');
-        for (let i = 0; i < 20; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.left = Math.random() * 100 + '%';
-            p.style.animationDelay = Math.random() * 6 + 's';            p.style.animationDuration = (4 + Math.random() * 4) + 's';
-            container.appendChild(p);
-        }
-    }
-    createParticles();
-
-    // 🔐 Form State
-    let isLogin = true;
-    const ADMIN_EMAIL = "playeraung449@gmail.com";
-    const ADMIN_PASS = "77422891"; // ⚠️ Demo only - use server-side in production
-    // 👁️ Toggle Password Visibility
-    window.togglePassword = function() {
-        const input = document.getElementById('password');
-        const icon = document.querySelector('#togglePassword i');
-        const isPass = input.type === 'password';
-        input.type = isPass ? 'text' : 'password';
-        icon.className = isPass ? 'fas fa-eye-slash' : 'fas fa-eye';
-    }
-
-    // 🔄 Toggle Login/Register Form
-    window.toggleForm = function() {
-        isLogin = !isLogin;
-        const title = document.getElementById('form-title');
-        const btn = document.getElementById('main-btn');
-        const toggle = document.getElementById('toggle-p');
-        const strength = document.getElementById('strength-container');
+    // 🚀 NON-BLOCKING Auth Check - UI won't freeze!
+    async function initAuth() {
+        // ⏱️ Show loading briefly, but don't block
+        if (loadingEl) loadingEl.style.display = 'flex';
         
-        if (isLogin) {
-            title.innerHTML = '🔐 အကောင့်ဝင်ရန်';
-            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login ဝင်မည်';
-            toggle.innerHTML = 'အကောင့်မရှိသေးပါက? <span>ဒီမှာဖွင့်ပါ</span>';
-            strength.style.display = 'none';
-            document.getElementById('password').setAttribute('autocomplete', 'current-password');
-        } else {
-            title.innerHTML = '📝 အကောင့်အသစ်ဖွင့်ရန်';
-            btn.innerHTML = '<i class="fas fa-user-plus"></i> အကောင့်ဖွင့်မည်';
-            toggle.innerHTML = 'အကောင့်ရှိပြီးသားဆိုလျှင်? <span>Login ဝင်ပါ</span>';
-            strength.style.display = 'block';
-            document.getElementById('password').setAttribute('autocomplete', 'new-password');
-        }
-        // Clear errors
-        clearErrors();
-    }
-
-    // 🔍 Validate Email Format
-    function isValidEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-    // 🔐 Check Password Strength
-    function checkPasswordStrength(pwd) {
-        let strength = 0;
-        if (pwd.length >= 8) strength++;
-        if (/[A-Z]/.test(pwd)) strength++;
-        if (/[0-9]/.test(pwd)) strength++;
-        if (/[^A-Za-z0-9]/.test(pwd)) strength++;
-        
-        const bar = document.getElementById('strength-bar');
-        const text = document.getElementById('strength-text');
-                bar.className = 'strength-bar';
-        if (strength <= 1) {
-            bar.classList.add('strength-weak');
-            text.textContent = '🔴 အားနည်းသည် (8+ characters သုံးပါ)';
-            text.style.color = '#dc3545';
-        } else if (strength <= 2) {
-            bar.classList.add('strength-medium');
-            text.textContent = '🟡 အသင့်အတင့် (ဂဏန်း/အက္ခရာကြီး ထည့်ပါ)';
-            text.style.color = '#ffc107';
-        } else {
-            bar.classList.add('strength-strong');
-            text.textContent = '🟢 ခိုင်မာပါပြီ ✅';
-            text.style.color = '#28a745';
-        }
-        return strength >= 3;
-    }
-
-    // 🎨 Show Toast Notification
-    window.showToast = function(message, type = 'info', duration = 3000) {
-        const toast = document.getElementById('toast');
-        const icon = document.getElementById('toast-icon');
-        const msg = document.getElementById('toast-msg');
-        
-        msg.textContent = message;
-        toast.className = `toast ${type} show`;
-        
-        if (type === 'success') icon.className = 'fas fa-check-circle';
-        else if (type === 'error') icon.className = 'fas fa-exclamation-circle';
-        else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
-        else icon.className = 'fas fa-info-circle';
-        
-        setTimeout(() => toast.classList.remove('show'), duration);
-    }
-
-    // ❌ Clear Error States
-    function clearErrors() {
-        document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
-        document.querySelectorAll('.error-msg').forEach(e => {
-            e.style.display = 'none';            e.textContent = '';
-        });
-    }
-
-    // ❌ Show Field Error
-    function showError(fieldId, message) {
-        const input = document.getElementById(fieldId);
-        const error = document.getElementById(fieldId + '-error');
-        input.classList.add('error');
-        error.textContent = message;
-        error.style.display = 'block';
-        input.focus();    }
-
-    // 🛒 Handle Auth (Login/Register) with Supabase
-    window.handleAuth = async function() {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const btn = document.getElementById('main-btn');
-
-        clearErrors();
-
-        // ✅ Validation
-        if (!email) { showError('email', 'Email ထည့်ပေးပါ'); return; }
-        if (!isValidEmail(email)) { showError('email', 'Email ပုံစံမှားနေပါသည်'); return; }
-        if (!password) { showError('password', 'Password ထည့်ပေးပါ'); return; }
-        
-        if (!isLogin && !checkPasswordStrength(password)) {
-            showError('password', 'Password အလွန်အားနည်းနေပါသည်');
-            return;
-        }
-
-        // ⚠️ Admin Registration Warning
-        if (!isLogin && email.toLowerCase() === ADMIN_EMAIL && password !== ADMIN_PASS) {
-            showToast('⚠️ Admin အကောင့်ဖွင့်ရန် သတ်မှတ်ထားသော Password ကိုသာ သုံးရပါမည်။', 'warning', 5000);
-            return;
-        }
-
-        // 🔄 Loading State
-        btn.classList.add('loading');
-        btn.disabled = true;
-        const originalBtnText = btn.innerHTML;
-        btn.innerHTML = '';
-
         try {
-            if (isLogin) {
-                // 🔐 Login with Supabase
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                })
-
-                if (error) throw error;
-
-                showToast('✅ Login အောင်မြင်ပါပြီ! 🎮', 'success');
-                
-                // Redirect based on role
-                setTimeout(() => {
-                    if (data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-                        window.location.href = "admin.html";
-                    } else {
-                        window.location.href = "index.html";                    }
-                }, 1000);
-                
-            } else {
-                // 📝 Register with Supabase
-                const { data, error: authError } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                })
-
-                if (authError) throw authError;
-
-                const user = data.user;
-
-        // Insert user details into 'users' table
-                const { error: dbError } = await supabase
-                    .from('users')
-                    .insert([
-                        { 
-                            id: user.id, // Link to Auth ID
-                            email: email,
-                            balance: 0,
-                            total_spent: 0,
-                            spinCount: 0,
-                            role: (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) ? "admin" : "user",
-                            createdAt: new Date().toISOString()
-                        }
-                    ])
-
-                if (dbError) {
-                    console.error("DB Error:", dbError);
-                    // Even if DB insert fails, Auth might have succeeded. 
-                    // In production, you should handle this rollback or retry.
-                    showToast('⚠️ အကောင့်ဖွင့်ပြီးပါပြီ၊ သို့သော် Data မှတ်သားမှု အနည်းငယ်အဆင်မပြေဖြစ်နိုင်ပါသည်။', 'warning');
-                } else {
-                    showToast('✅ အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါပြီ! 🎉', 'success');
-                }
-                
-                setTimeout(() => {
-                    window.location.href = (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) ? "admin.html" : "index.html";
-                }, 1500);
+            // ⚡ Use Promise.race with timeout to prevent hanging
+            const timeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('timeout')), 4000)
+            );
+            
+            const {  { session } } = await Promise.race([
+                supabase.auth.getSession(),
+                timeout
+            ]);
+            
+            if (session?.user) {
+                currentUser = session.user;
+                console.log('✅ Logged in:', session.user.email);
+                // Redirect to home if already logged in
+                setTimeout(() => window.location.href = 'index.html', 500);
             }
         } catch (error) {
-            console.error("Auth Error:", error);
-            let msg = "အဆင်မပြေဖြစ်နေပါသည်";
-            
-            // Supabase Error Handling
-            if (error.message.includes('Invalid login credentials')) {
-                showError('password', 'Email သို့မဟုတ် Password မှားနေပါသည်');
-            } else if (error.message.includes('User already registered')) {
-                showError('email', 'ဒီ Email က အကောင့်ရှိပြီးသား ဖြစ်နေပါတယ်');
-            } else if (error.message.includes('Password should be at least 6 characters')) {
-                showError('password', 'Password အနည်းဆုံး 6 လုံး ရှိရပါမည်');
-            } else if (error.message.includes('Invalid email')) {
-                showError('email', 'Email ပုံစံမှားနေပါသည်');
-            } else {
-                msg += ": " + error.message;
-                showToast('❌ ' + msg, 'error', 5000);
-            }
+            console.warn('⚠️ Auth check skipped:', error.message);
+            // Don't block - just continue to show login form
         } finally {
-            // 🔁 Reset Button
-            btn.classList.remove('loading');
-            btn.disabled = false;
-            btn.innerHTML = originalBtnText;
+            // ✅ Always hide loading and show form, even if auth fails
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (loginForm) loginForm.style.display = 'block';
+            if (guestContent) guestContent.style.display = 'block';
         }
     }
 
-    // ⌨️ Keyboard Support
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAuth();
-        }
-        if (e.key === 'Escape') {
-            togglePassword();
-        }
-    });
-
-    // ♿ Accessibility: Toggle with Space/Enter
-    document.querySelector('.toggle-text').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleForm();
+    // 🔄 Listen for login/logout events
+    supabase.auth.onAuthStateChange((event, session) => {
+        console.log('🔄 Auth event:', event);
+        if (event === 'SIGNED_IN' && session?.user) {
+            currentUser = session.user;
+            window.location.href = 'index.html';        }
+        if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            if (loginForm) loginForm.style.display = 'block';
         }
     });
 
-    // 📱 Input Real-time Validation
-    document.getElementById('email').addEventListener('input', function() {
-        if (this.value && !isValidEmail(this.value)) {
-            this.classList.add('error');
+    // 🎯 Login Function
+    async function doLogin() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const btn = document.querySelector('.login-btn');
+        
+        if (!email || !password) {
+            alert('⚠️ Email နှင့် Password နှစ်ခုလုံး ဖြည့်ပါ');
+            return;
+        }
+        
+        // Loading state
+        const originalBtn = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ဝင်နေသည်...';
+        btn.disabled = true;
+        
+        try {
+            const {  user, error } = await supabase.auth.signInWithPassword({
+                email, password
+            });
+            
+            if (error) throw error;
+            
+            if (user) {
+                currentUser = user;
+                alert('✅ Login အောင်မြင်ပါပြီ! 🎉');
+                window.location.href = 'index.html';
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            let msg = '❌ Login အဆင်မပြေ';
+            if (err.message?.includes('Invalid login')) msg = '❌ Email သို့မဟုတ် Password မှားနေပါသည်';
+            else if (err.message?.includes('Email not confirmed')) msg = '📧 Email အတည်ပြုရန် လိုအပ်ပါသည်';
+            alert(msg);
+        } finally {
+            btn.innerHTML = originalBtn;
+            btn.disabled = false;
+        }
+    }
+
+    // 📝 Register Function
+    async function doRegister() {
+        const email = document.getElementById('email').value.trim();        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            alert('⚠️ Email နှင့် Password နှစ်ခုလုံး ဖြည့်ပါ');
+            return;
+        }
+        if (password.length < 6) {
+            alert('⚠️ Password အနည်းဆုံး 6 စာလုံး ရှိရမည်');
+            return;
+        }
+        
+        try {
+            const {  user, error } = await supabase.auth.signUp({
+                email, password,
+                options: {
+                    data: { username: email.split('@')[0] }
+                }
+            });
+            
+            if (error) throw error;
+            
+            if (user) {
+                // Create user record in public.users table
+                await supabase.from('users').insert({
+                    id: user.id,
+                    email: email,
+                    username: email.split('@')[0],
+                    balance: 0,
+                    total_spent: 0,
+                    spin_count: 0,
+                    role: 'user'
+                });
+                
+                alert('✅ အကောင့်ဖွင့်ပြီးပါပြီ! 🎉\n\nEmail အတည်ပြုစာ ပို့ထားပါတယ်။\n(ဒါမှမဟုတ်) Admin (@Johnny_AZM) ကို ဆက်သွယ်ပြီး အတည်ပြုခိုင်းပါ။');
+            }
+        } catch (err) {
+            console.error('Register error:', err);
+            let msg = '❌ အကောင့်ဖွင့်ရာတွင် အဆင်မပြေ';
+            if (err.message?.includes('User already registered')) msg = '⚠️ ဤ Email ဖြင့် အကောင့်ရှိပြီးပါပြီ';
+            alert(msg);
+        }
+    }
+
+    // 🔐 Forgot Password
+    async function forgotPassword() {
+        const email = prompt('📧 Email address ကို ရိုက်ထည့်ပါ:');
+        if (!email) return;
+        
+        try {
+            await supabase.auth.resetPasswordForEmail(email, {                redirectTo: window.location.origin + '/login.html'
+            });
+            alert('✅ Password reset link ပို့လိုက်ပါပြီ!\n\nEmail ကို စစ်ဆေးပါ။');
+        } catch (err) {
+            alert('❌ အဆင်မပြေ: ' + err.message);
+        }
+    }
+
+    // 🚪 Logout
+    async function doLogout() {
+        if (confirm('🚪 Logout လုပ်မလား?')) {
+            await supabase.auth.signOut();
+            currentUser = null;
+            window.location.href = 'login.html';
+        }
+    }
+
+    // 🎨 Toggle Password Visibility
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.querySelector('.toggle-pass i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
         } else {
-            this.classList.remove('error');
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
         }
+    }
+
+    // 🚀 Initialize - NON-BLOCKING!
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🎮 Johnny Gaming Shop - Login Loaded');
+        // Start auth check but DON'T wait for it
+        initAuth();
+        
+        // Show form immediately if loading takes too long
+        setTimeout(() => {
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                console.warn('⚠️ Auth timeout - showing form anyway');
+                loadingEl.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'block';
+                if (guestContent) guestContent.style.display = 'block';
+            }
+        }, 3000);
     });
 
-    document.getElementById('password').addEventListener('input', function() {
-        if (!isLogin) checkPasswordStrength(this.value);
-        if (this.value) this.classList.remove('error');
+    // ⌨️ Enter Key Support
+    document.getElementById('password')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {            // Check if register mode is active
+            const isRegister = document.querySelector('.toggle-auth.active')?.dataset.mode === 'register';
+            if (isRegister) doRegister();
+            else doLogin();
+        }
     });
 </script>
 
